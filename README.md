@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>極秘レシピ</title>
+    <title>メモ帳アプリ</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
@@ -171,6 +171,7 @@
                 flex-direction: column;
             }
         }
+
         .editor-pane {
             flex: 1;
             display: flex;
@@ -287,6 +288,7 @@
             background: #fff;
         }
 
+        /* 全画面モード用 */
         body.editor-fullscreen {
             overflow: hidden;
         }
@@ -319,36 +321,37 @@
     <div class="app-card">
         <div class="app-header">
             <span>📝</span>
-            <span class="app-header-title">極秘レシピ</span>
+            <span class="app-header-title">メモ帳アプリ</span>
         </div>
         <div class="app-body">
             <div class="sidebar">
-                <div class="sidebar-title">🔪 厨房</div>
+                <div class="sidebar-title">📂 フォルダ</div>
                 <div id="folderList" class="folder-list"></div>
-                <input id="newFolderName" class="folder-input" placeholder="新しい料理">
-                <button class="primary-btn" onclick="addFolder()">料理を追加</button>
+                <input id="newFolderName" class="folder-input" placeholder="新しいフォルダ名">
+                <button class="primary-btn" onclick="addFolder()">フォルダを追加</button>
             </div>
 
             <div class="editor" id="editorArea">
                 <div class="editor-header">
-                    <h2 id="currentFolderName">料理を選べ</h2>
+                    <h2 id="currentFolderName">フォルダを選択してください</h2>
                     <div class="editor-header-right">
                         <div class="char-count">文字数: <span id="charCount">0</span></div>
-                        <button class="fullscreen-toggle" onclick="toggleFullscreen()">✂ 掻っ捌く</button>
+                        <button class="fullscreen-toggle" onclick="toggleFullscreen()">⬜ 全画面</button>
                     </div>
                 </div>
+
                 <div class="editor-main">
                     <div class="editor-pane">
-                        <input id="memoTitle" class="memo-title" placeholder="料理名">
-                        <textarea id="memoText" class="memo-text" placeholder="覚悟しやがれ……"></textarea>
+                        <input id="memoTitle" class="memo-title" placeholder="メモのタイトル">
+                        <textarea id="memoText" class="memo-text" placeholder="ここにメモを書いてください…"></textarea>
                         <div class="editor-actions">
-                            <button class="secondary-btn" onclick="clearMemo()">解体</button>
-                            <button class="primary-small-btn" onclick="saveMemo()">冷蔵</button>
+                            <button class="secondary-btn" onclick="newMemo()">新規</button>
+                            <button class="primary-small-btn" onclick="saveMemo()">保存</button>
                         </div>
                     </div>
 
                     <div class="memo-list-pane">
-                        <div class="memo-list-title">在庫一覧</div>
+                        <div class="memo-list-title">このフォルダのメモ一覧</div>
                         <div id="memoList" class="memo-list"></div>
                     </div>
                 </div>
@@ -358,34 +361,38 @@
 </div>
 
 <script>
-    const STORAGE_KEY = "kojimemo_data_v1";
+    // v2 にして、昔の保存データと衝突しないようにする
+    const STORAGE_KEY = "kojimemo_data_v2";
 
-    let appData = {
+    let state = {
         folders: {},
-        currentFolder: null
+        currentFolder: null,
+        currentMemoIndex: null
     };
 
-    function loadFromStorage() {
+    function loadState() {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                appData = JSON.parse(saved);
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                state = JSON.parse(raw);
             } else {
-                appData.folders = {
-                    "魚": [],
-                    "肉A": [],
-                    "肉B": []
+                state.folders = {
+                    "メモ": []
                 };
-                appData.currentFolder = "レシピ";
+                state.currentFolder = "メモ";
+                state.currentMemoIndex = null;
+                saveState();
             }
         } catch (e) {
             console.error("load error", e);
+            state = { folders: { "メモ": [] }, currentFolder: "メモ", currentMemoIndex: null };
+            saveState();
         }
     }
 
-    function saveToStorage() {
+    function saveState() {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         } catch (e) {
             console.error("save error", e);
         }
@@ -395,172 +402,214 @@
         const folderList = document.getElementById("folderList");
         folderList.innerHTML = "";
 
-        Object.keys(appData.folders).forEach(folderName => {
+        const names = Object.keys(state.folders);
+        if (names.length === 0) {
+            folderList.innerHTML = '<div style="font-size:12px;color:#999;">フォルダがありません</div>';
+            document.getElementById("currentFolderName").textContent = "フォルダを選択してください";
+            return;
+        }
+
+        names.forEach(name => {
             const div = document.createElement("div");
-            div.className = "folder-item" + (folderName === appData.currentFolder ? " active" : "");
-            div.textContent = folderName;
-            div.onclick = () => selectFolder(folderName);
+            div.className = "folder-item" + (name === state.currentFolder ? " active" : "");
+            div.textContent = name;
+            div.onclick = () => {
+                state.currentFolder = name;
+                state.currentMemoIndex = null;
+                saveState();
+                renderAll();
+            };
             folderList.appendChild(div);
         });
 
-        if (!appData.currentFolder || !appData.folders[appData.currentFolder]) {
-            const first = Object.keys(appData.folders)[0];
-            appData.currentFolder = first || null;
+        if (!state.currentFolder || !state.folders[state.currentFolder]) {
+            state.currentFolder = names[0];
         }
 
-        const currentNameEl = document.getElementById("currentFolderName");
-        currentNameEl.textContent = appData.currentFolder
-            ? `📁 ${appData.currentFolder}`
-            : "料理を選べ";
-
-        renderMemoList();
-    }
-
-    function selectFolder(folderName) {
-        appData.currentFolder = folderName;
-        saveToStorage();
-        renderFolders();
-        clearMemo();
+        document.getElementById("currentFolderName").textContent = "📁 " + state.currentFolder;
     }
 
     function addFolder() {
         const input = document.getElementById("newFolderName");
         const name = input.value.trim();
         if (!name) return;
-        if (appData.folders[name]) {
-            alert("メニューがダブった");
+        if (state.folders[name]) {
+            alert("同じ名前のフォルダがあります");
             return;
         }
-        appData.folders[name] = [];
-        appData.currentFolder = name;
+        state.folders[name] = [];
+        state.currentFolder = name;
+        state.currentMemoIndex = null;
         input.value = "";
-        saveToStorage();
-        renderFolders();
-        clearMemo();
+        saveState();
+        renderAll();
     }
+
     function renderMemoList() {
         const memoList = document.getElementById("memoList");
         memoList.innerHTML = "";
 
-        if (!appData.currentFolder) return;
-
-        const memos = appData.folders[appData.currentFolder];
-
-        if (!memos || memos.length === 0) {
-            memoList.innerHTML = `<div style="font-size:12px; color:#888;">何もねえ</div>`;
+        if (!state.currentFolder || !state.folders[state.currentFolder]) {
+            memoList.innerHTML = '<div style="font-size:12px;color:#999;">フォルダが選択されていません</div>';
             return;
         }
 
+        const memos = state.folders[state.currentFolder];
+        if (!memos || memos.length === 0) {
+            memoList.innerHTML = '<div style="font-size:12px;color:#999;">メモがありません</div>';
+            return;
+        }
+
+        // 新しい順にしたければここでソートしてもいい
         memos.forEach((memo, index) => {
             const item = document.createElement("div");
             item.className = "memo-list-item";
 
-            const title = document.createElement("div");
-            title.className = "memo-list-item-title";
-            title.textContent = memo.title || "(無題)";
+            const titleDiv = document.createElement("div");
+            titleDiv.className = "memo-list-item-title";
+            titleDiv.textContent = memo.title || "(無題)";
 
-            const meta = document.createElement("div");
-            meta.className = "memo-list-item-meta";
-            meta.innerHTML = `
-                <span>${memo.length} 文字</span>
-                <span>${new Date(memo.time).toLocaleString()}</span>
-            `;
+            const metaDiv = document.createElement("div");
+            metaDiv.className = "memo-list-item-meta";
+            const date = new Date(memo.updated || memo.time || Date.now());
+            const dateStr =
+                (date.getMonth() + 1) + "/" + date.getDate() + " " +
+                String(date.getHours()).padStart(2, "0") + ":" +
+                String(date.getMinutes()).padStart(2, "0");
+            metaDiv.innerHTML = `<span>${dateStr}</span><span>${memo.length || 0} 文字</span>`;
 
             const actions = document.createElement("div");
             actions.className = "memo-list-item-actions";
 
             const openBtn = document.createElement("button");
             openBtn.className = "list-btn";
-            openBtn.textContent = "調理";
-            openBtn.onclick = () => loadMemo(index);
+            openBtn.textContent = "開く";
+            openBtn.onclick = () => {
+                state.currentMemoIndex = index;
+                loadCurrentMemo();
+            };
 
             const delBtn = document.createElement("button");
             delBtn.className = "list-btn";
-            delBtn.textContent = "解体";
-            delBtn.onclick = () => deleteMemo(index);
+            delBtn.textContent = "削除";
+            delBtn.onclick = () => {
+                if (confirm("このメモを削除しますか？")) {
+                    state.folders[state.currentFolder].splice(index, 1);
+                    if (state.currentMemoIndex === index) {
+                        state.currentMemoIndex = null;
+                        clearEditor();
+                    }
+                    saveState();
+                    renderMemoList();
+                }
+            };
 
             actions.appendChild(openBtn);
             actions.appendChild(delBtn);
 
-            item.appendChild(title);
-            item.appendChild(meta);
+            item.appendChild(titleDiv);
+            item.appendChild(metaDiv);
             item.appendChild(actions);
-
             memoList.appendChild(item);
         });
     }
 
+    function loadCurrentMemo() {
+        if (
+            state.currentFolder &&
+            state.folders[state.currentFolder] &&
+            state.currentMemoIndex != null
+        ) {
+            const memo = state.folders[state.currentFolder][state.currentMemoIndex];
+            if (memo) {
+                document.getElementById("memoTitle").value = memo.title || "";
+                document.getElementById("memoText").value = memo.content || "";
+                updateCharCount();
+                return;
+            }
+        }
+        clearEditor();
+    }
+
+    function clearEditor() {
+        document.getElementById("memoTitle").value = "";
+        document.getElementById("memoText").value = "";
+        updateCharCount();
+    }
+
+    function newMemo() {
+        state.currentMemoIndex = null;
+        clearEditor();
+    }
+
     function saveMemo() {
-        if (!appData.currentFolder) {
-            alert("料理を選べ");
+        if (!state.currentFolder || !state.folders[state.currentFolder]) {
+            alert("まずフォルダを選択してください");
             return;
         }
-
         const title = document.getElementById("memoTitle").value.trim();
         const content = document.getElementById("memoText").value;
         const length = content.length;
+        const now = Date.now();
 
-        const memo = {
-            title: title,
-            content: content,
-            length: length,
-            time: Date.now()
-        };
+        if (state.currentMemoIndex == null) {
+            // 新規
+            state.folders[state.currentFolder].push({
+                title,
+                content,
+                length,
+                updated: now
+            });
+            state.currentMemoIndex = state.folders[state.currentFolder].length - 1;
+        } else {
+            // 上書き
+            const memo = state.folders[state.currentFolder][state.currentMemoIndex];
+            if (memo) {
+                memo.title = title;
+                memo.content = content;
+                memo.length = length;
+                memo.updated = now;
+            }
+        }
 
-        appData.folders[appData.currentFolder].push(memo);
-
-        saveToStorage();
+        saveState();
         renderMemoList();
-        clearMemo();
+        updateCharCount();
     }
 
-    function loadMemo(index) {
-        const memo = appData.folders[appData.currentFolder][index];
-        document.getElementById("memoTitle").value = memo.title;
-        document.getElementById("memoText").value = memo.content;
-        updateCount();
-    }
-
-    function deleteMemo(index) {
-        if (!confirm("解体されてえんだな？")) return;
-        appData.folders[appData.currentFolder].splice(index, 1);
-        saveToStorage();
-        renderMemoList();
-        clearMemo();
-    }
-    function clearMemo() {
-        document.getElementById("memoTitle").value = "";
-        document.getElementById("memoText").value = "";
-        updateCount();
-    }
-
-    function updateCount() {
-        const text = document.getElementById("memoText").value;
+    function updateCharCount() {
+        const text = document.getElementById("memoText").value || "";
         document.getElementById("charCount").textContent = text.length;
     }
-
-    document.getElementById("memoText").addEventListener("input", updateCount);
 
     function toggleFullscreen() {
         const editor = document.getElementById("editorArea");
         const btn = document.querySelector(".fullscreen-toggle");
-
-        if (!editor) return;
+        if (!editor || !btn) return;
 
         if (editor.classList.contains("fullscreen")) {
             editor.classList.remove("fullscreen");
             document.body.classList.remove("editor-fullscreen");
-            btn.textContent = "⬜ 解剖";
+            btn.textContent = "⬜ 全画面";
         } else {
             editor.classList.add("fullscreen");
             document.body.classList.add("editor-fullscreen");
-            btn.textContent = "❌ 失せろ";
+            btn.textContent = "❌ 閉じる";
         }
     }
 
-    loadFromStorage();
-    renderFolders();
-    updateCount();
+    document.addEventListener("DOMContentLoaded", () => {
+        loadState();
+        renderFolders();
+        renderMemoList();
+        loadCurrentMemo();
+        updateCharCount();
+
+        const memoText = document.getElementById("memoText");
+        if (memoText) {
+            memoText.addEventListener("input", updateCharCount);
+        }
+    });
 </script>
 
 </body>
