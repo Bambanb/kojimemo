@@ -73,10 +73,6 @@
   <textarea id="editor" placeholder="ここに本文…"></textarea>
 </div>
 
-  window.addEventListener("hashchange", applyHash);
-applyHash();
-render();
-
 <script>
   window.onerror = function (msg, src, line, col, err) {
   alert("JSエラー:\n" + msg + "\n" + line + ":" + col);
@@ -404,6 +400,10 @@ function closeEditor(){
   render();
 }
 
+ window.addEventListener("hashchange", applyHash);
+applyHash();
+render();
+  
 render();
 </script>
 </body>
