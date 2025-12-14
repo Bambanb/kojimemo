@@ -184,11 +184,11 @@ applyHash();
 const KEY = "memoTreeV1";
 
 function newNode(){ return { folders:{}, memos:{} }; }
-let root = load() || newNode();
+ver root = load() || newNode();
 ver path = []; // ["皇颯","短編",...]
-let selected = null; // {type:"folder", name} or {type:"memo", id}
-let editingMemoId = null;
-let autosaveTimer = null;
+ver selected = null; // {type:"folder", name} or {type:"memo", id}
+ver editingMemoId = null;
+ver autosaveTimer = null;
 
 function load(){
   try { return JSON.parse(localStorage.getItem(KEY)); } catch(e){ return null; }
