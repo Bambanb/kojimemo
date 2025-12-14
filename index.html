@@ -128,8 +128,22 @@ function setHashForMemo(id) {
   setHashForList();
 }
 
-window.addEventListener("hashchange", applyHash);
+function safeBoot(){
+  try { applyHash(); } catch(e){ console.error(e); }
+  try { render(); } catch(e){ console.error(e); }
+}
 
+window.addEventListener("hashchange", () => {
+  try { applyHash(); } catch(e){ console.error(e); }
+  try { render(); } catch(e){ console.error(e); }
+});
+
+// DOMができてから起動（順番事故を潰す）
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", safeBoot);
+} else {
+  safeBoot();
+}
 // 初回：必ず #home を持たせる（これが無いと戻るで外に出やすい）
 if (!location.hash) location.hash = "home";
 applyHash();
