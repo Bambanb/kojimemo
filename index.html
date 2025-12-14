@@ -74,6 +74,9 @@
 </div>
 
 <script>
+  window.onerror = function (msg, src, line, col, err) {
+  alert("JSエラー:\n" + msg + "\n" + line + ":" + col);
+};
   // ===== 画面遷移を #（ハッシュ）で管理して、戻るでページが消えないようにする =====
 function enc(s){ return encodeURIComponent(s); }
 function dec(s){ return decodeURIComponent(s || ""); }
