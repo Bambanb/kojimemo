@@ -1,453 +1,642 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>メモ帳</title>
-<style>
-  body{margin:0;font-family:system-ui,-apple-system;background:#f4f6f8;}
-  header{background:#2d6cdf;color:#fff;padding:12px 12px 10px;position:sticky;top:0;z-index:10;}
-  .toprow{display:flex;gap:8px;align-items:center;justify-content:space-between;}
-  .title{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .crumb{font-size:12px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px;}
-  #app{padding:12px;}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
-  input{padding:10px;border:1px solid #d9dee6;border-radius:8px;flex:1;min-width:180px;background:#fff;}
-  button{padding:10px 12px;border:none;border-radius:10px;font-weight:600;}
-  .primary{background:#2d6cdf;color:#fff;}
-  .ghost{background:#fff;border:1px solid #d9dee6;}
-  .danger{background:#ffecec;border:1px solid #ffb7b7;color:#b00020;}
-  .card{background:#fff;border-radius:14px;padding:10px;border:1px solid #e6ebf2;}
-  .list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
-  .item{background:#fff;border:1px solid #e6ebf2;border-radius:12px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-  .left{display:flex;align-items:center;gap:10px;min-width:0;}
-  .icon{font-size:18px;flex:0 0 auto;}
-  .name{font-weight:700;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .meta{font-size:12px;opacity:.65;margin-top:2px;}
-  .small{font-size:12px;opacity:.7;}
-  #editorView{pointer-events: none;display: none; /* これが既にあるならOK */
-    position:fixed;inset:0;background:#f4f6f8;display:none;flex-direction:column;}
-  #editorHeader{background:#2d6cdf;color:#fff;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-  #editorHeader .hleft{display:flex;flex-direction:column;gap:2px;min-width:0;}
-  #editorTitle{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  #editorCount{font-size:12px;opacity:.9;}
-  #editorActions{display:flex;gap:8px;flex:0 0 auto;}
-  textarea{flex:1;width:100%;border:none;outline:none;padding:12px;font-size:16px;line-height:1.7;resize:none;background:#fff;}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>メモ（フォルダ＋字数）</title>
+  <style>
+    :root{
+      --bg:#0b1020; --panel:#0f172a; --panel2:#111b33;
+      --text:#e5e7eb; --muted:#9ca3af; --line:#233056;
+      --accent:#60a5fa; --danger:#fb7185;
+      --btn:#1f2a4a; --btn2:#223055;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:linear-gradient(180deg,#050816,#0b1020 40%,#0b1020);
+      color:var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    button, input, textarea{font:inherit; color:inherit}
+    .app{height:100%; display:flex; flex-direction:column}
 
-#editorView { pointer-events: none; }
-#editorView[style*="display: flex"], 
-#editorView[style*="display:flex"],
-#editorView[style*="display: block"],
-#editorView[style*="display:block"] { pointer-events: auto; }
-</style>
+    /* Top bar */
+    .topbar{
+      display:flex; align-items:center; gap:10px;
+      padding:12px 12px 10px;
+      background:rgba(15,23,42,.9);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+    }
+    .crumb{
+      flex:1; min-width:0;
+      font-weight:700; letter-spacing:.02em;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .crumb small{font-weight:600; color:var(--muted)}
+    .iconbtn{
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg,var(--btn2),var(--btn));
+      border-radius:12px;
+      padding:10px 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+      cursor:pointer;
+    }
+    .iconbtn:active{transform:translateY(1px)}
+    .iconbtn.danger{border-color: rgba(251,113,133,.35)}
+    .iconbtn.primary{border-color: rgba(96,165,250,.35)}
+    .iconbtn[disabled]{opacity:.5; cursor:not-allowed}
+
+    /* List view */
+    .view{flex:1; display:none; min-height:0}
+    .view.active{display:flex; flex-direction:column}
+
+    .controls{
+      padding:12px;
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background: rgba(15,23,42,.55);
+    }
+    .field{
+      display:flex; gap:8px; align-items:center;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius: 12px;
+      padding:10px;
+      flex:1;
+      min-width: 220px;
+    }
+    .field input{
+      border:0; outline:0; background:transparent; width:100%;
+      color:var(--text);
+    }
+    .hint{color:var(--muted); font-size:12px}
+
+    .grid{
+      flex:1; min-height:0; overflow:auto;
+      padding:12px;
+    }
+    .card{
+      background: rgba(17,27,51,.72);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      margin-bottom: 12px;
+    }
+    .card h3{
+      margin:0; padding:12px 12px 0;
+      font-size:14px; color:var(--muted); font-weight:700;
+      display:flex; align-items:center; gap:8px;
+    }
+    .list{padding:10px 10px 12px}
+    .row{
+      display:flex; align-items:center; gap:10px;
+      padding:12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.03);
+      cursor:pointer;
+      user-select:none;
+    }
+    .row + .row{margin-top:10px}
+    .row:active{transform: translateY(1px)}
+    .row .title{
+      flex:1; min-width:0;
+      font-weight:700;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .row .meta{font-size:12px; color:var(--muted); white-space:nowrap}
+    .badge{
+      font-size:12px; color:#cbd5e1;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(96,165,250,.12);
+      padding:4px 8px; border-radius:999px;
+    }
+    .pillbtn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      padding:6px 10px;
+      font-size:12px;
+      color: #cbd5e1;
+      cursor:pointer;
+    }
+    .pillbtn:active{transform:translateY(1px)}
+    .pillbtn.danger{border-color: rgba(251,113,133,.35); color:#fecdd3}
+    .empty{
+      padding:20px 12px;
+      color: var(--muted);
+      text-align:center;
+    }
+
+    /* Editor view (no overlay-tap bug: display:none when closed) */
+    .editor{
+      flex:1; min-height:0; display:flex; flex-direction:column;
+      padding:12px;
+      gap:10px;
+    }
+    .editorTop{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius: 12px;
+      padding:10px;
+    }
+    .editorTop .name{
+      flex:1; min-width:180px;
+      border:0; outline:0; background:transparent;
+      font-weight:800;
+    }
+    .counter{
+      font-size:12px; color:var(--muted);
+      padding:4px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+    textarea{
+      flex:1; min-height:0; width:100%;
+      resize:none;
+      padding:14px 14px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(3,7,18,.55);
+      color: var(--text);
+      outline:none;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+    .footerBtns{
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .toast{
+      position: fixed;
+      left:50%; bottom:18px; transform: translateX(-50%);
+      background: rgba(0,0,0,.75);
+      border: 1px solid rgba(255,255,255,.10);
+      color: #e5e7eb;
+      padding:10px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      opacity:0; pointer-events:none;
+      transition: opacity .15s ease;
+      z-index: 9999;
+    }
+    .toast.show{opacity:1}
+  </style>
 </head>
 <body>
-  <header>
-  <div class="toprow">
-    <div class="title">🗂 メモ帳</div>
-    <div class="small" id="stats"></div>
-  </div>
-  <div class="crumb" id="breadcrumb"></div>
-</header>
-
-<div id="app">
-  <div class="toolbar">
-    <button class="ghost" id="backBtn" onclick="goUp()">← 上へ</button>
-    <input id="nameInput" placeholder="フォルダ名 / メモ名">
-    <button class="primary" onclick="addFolder()">＋フォルダ</button>
-    <button class="primary" onclick="addMemo()">＋メモ</button>
-    <button class="danger" onclick="deleteCurrent()">🗑 削除</button>
+<div class="app">
+  <div class="topbar">
+    <button class="iconbtn" id="btnUp" title="上へ">⬅︎</button>
+    <div class="crumb" id="crumb">ホーム <small id="crumbSmall"></small></div>
+    <button class="iconbtn primary" id="btnNewMemo" title="新規メモ">＋メモ</button>
+    <button class="iconbtn" id="btnNewFolder" title="新規フォルダ">＋📁</button>
   </div>
 
-  <div class="card">
-    <div class="small">今いる場所の中身（フォルダとメモが一緒に並ぶ）</div>
-    <div class="list" id="list"></div>
+  <!-- LIST VIEW -->
+  <div class="view active" id="listView">
+    <div class="controls">
+      <div class="field">
+        <span class="hint">検索</span>
+        <input id="searchInput" placeholder="タイトル/本文の一部（任意）" />
+      </div>
+      <button class="pillbtn" id="btnRenameFolder">フォルダ名変更</button>
+      <button class="pillbtn danger" id="btnDeleteFolder">フォルダ削除</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>フォルダ</h3>
+        <div class="list" id="folderList"></div>
+      </div>
+
+      <div class="card">
+        <h3>メモ</h3>
+        <div class="list" id="memoList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDITOR VIEW -->
+  <div class="view" id="editorView">
+    <div class="editor">
+      <div class="editorTop">
+        <input class="name" id="memoName" placeholder="メモ名（任意）" />
+        <span class="counter" id="charCount">0 文字</span>
+        <span class="counter" id="saveState">自動保存</span>
+      </div>
+      <textarea id="memoBody" placeholder="ここに書く（書式は勝手に変えない）"></textarea>
+      <div class="footerBtns">
+        <button class="iconbtn" id="btnCloseEditor">一覧へ戻る</button>
+        <button class="iconbtn" id="btnDuplicate">複製</button>
+        <button class="iconbtn danger" id="btnDeleteMemo">削除</button>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Editor (全画面) -->
-<div id="editorView">
-  <div id="editorHeader">
-    <div class="hleft">
-      <div id="editorTitle">編集</div>
-      <div id="editorCount">文字数: 0</div>
-    </div>
-    <div id="editorActions">
-      <button class="ghost" onclick="closeEditor()">閉じる</button>
-      <button class="primary" onclick="saveNow()">保存</button>
-    </div>
-  </div>
-  <textarea id="editor" placeholder="ここに本文…"></textarea>
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
-  window.onerror = function (msg, src, line, col, err) {
-  alert("JSエラー:\n" + msg + "\n" + line + ":" + col);
-};
-  // ===== 画面遷移を #（ハッシュ）で管理して、戻るでページが消えないようにする =====
-function enc(s){ return encodeURIComponent(s); }
-function dec(s){ return decodeURIComponent(s || ""); }
+(() => {
+  // ====== storage ======
+  const STORAGE_KEY = "memo_app_v1_store";
 
-// 状態 → ハッシュ
-function setHashForList() {
-  if (location.hash !== "#home") location.hash = "home";
-}
-
-  // フォルダに入る前に「戻り先」をアプリ内に作る
-if (location.hash === "#home") {
-  history.pushState({ app: true }, "", location.href); // 1個だけ履歴を増やす（中身同じでOK）
-}
-setHashForFolder(path);
-function setHashForFolder(pathArr) {
-  const p = (pathArr || []).map(enc).join("/");
-  location.hash = "f=" + p;
-}
-
-function setHashForMemo(id) {
-  location.hash = "m=" + enc(String(id));
-}
-
-  if (h.startsWith("f=")) {
-    const p = dec(h.slice(2));
-    const arr = p ? p.split("/").map(dec) : [];
-    if (typeof closeEditor === "function") closeEditor();
-    if (typeof path !== "undefined") path = arr;
-    if (typeof selected !== "undefined") selected = null;
-    if (typeof render === "function") render();
-    return;
+  /** data schema:
+   * node: { id, name, folders: [node], memos: [memo] }
+   * memo: { id, name, body, createdAt, updatedAt }
+   */
+  function uid(){
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+  function now(){ return Date.now(); }
+  function safeParse(json){
+    try{ return JSON.parse(json); }catch(_){ return null; }
+  }
+  function newNode(name=""){
+    return { id: uid(), name, folders: [], memos: [] };
+  }
+  function newMemo(name=""){
+    return { id: uid(), name, body:"", createdAt: now(), updatedAt: now() };
   }
 
-  if (h.startsWith("m=")) {
-    const id = dec(h.slice(2));
-    // 編集画面を開く（関数名はあなたのコードに合わせて）
-    if (typeof openEditorById === "function") {
-      openEditorById(id);
-    } else if (typeof openEditor === "function") {
-      openEditor(id);
+  function loadStore(){
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const data = raw ? safeParse(raw) : null;
+    if (data && data.root) return data;
+    // 初期
+    const root = newNode("ホーム");
+    return { version: 1, root, lastOpen: { pathIds:[root.id], view:"list", memoId:null } };
+  }
+  function saveStore(){
+    try{
+      store.lastOpen = { pathIds: path.map(n=>n.id), view: view, memoId: currentMemoId };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      saveState.textContent = "自動保存";
+    }catch(e){
+      console.error(e);
+      saveState.textContent = "保存失敗";
+      toast("保存に失敗（容量/権限）");
+    }
+  }
+
+  // ====== UI refs ======
+  const listView = document.getElementById("listView");
+  const editorView = document.getElementById("editorView");
+  const crumb = document.getElementById("crumb");
+  const crumbSmall = document.getElementById("crumbSmall");
+
+  const btnUp = document.getElementById("btnUp");
+  const btnNewMemo = document.getElementById("btnNewMemo");
+  const btnNewFolder = document.getElementById("btnNewFolder");
+  const btnRenameFolder = document.getElementById("btnRenameFolder");
+  const btnDeleteFolder = document.getElementById("btnDeleteFolder");
+
+  const folderList = document.getElementById("folderList");
+  const memoList = document.getElementById("memoList");
+  const searchInput = document.getElementById("searchInput");
+
+  const memoName = document.getElementById("memoName");
+  const memoBody = document.getElementById("memoBody");
+  const charCount = document.getElementById("charCount");
+  const saveState = document.getElementById("saveState");
+
+  const btnCloseEditor = document.getElementById("btnCloseEditor");
+  const btnDuplicate = document.getElementById("btnDuplicate");
+  const btnDeleteMemo = document.getElementById("btnDeleteMemo");
+
+  const toastEl = document.getElementById("toast");
+  let toastTimer = null;
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toastEl.classList.remove("show"), 900);
+  }
+
+  // ====== state ======
+  let store = loadStore();
+  const root = store.root;
+  let path = [root]; // stack of nodes
+  let view = "list"; // "list" | "editor"
+  let currentMemoId = null;
+  let autosaveTimer = null;
+
+  // ====== helpers ======
+  function currentNode(){
+    return path[path.length - 1];
+  }
+  function findNodeById(node, id){
+    if (node.id === id) return node;
+    for (const f of node.folders){
+      const hit = findNodeById(f, id);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  function findMemoById(node, memoId){
+    // search entire tree for memo
+    if (!memoId) return null;
+    for (const m of node.memos) if (m.id === memoId) return { memo:m, parent:node };
+    for (const f of node.folders){
+      const hit = findMemoById(f, memoId);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  function fmtTime(t){
+    const d = new Date(t);
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    const hh = String(d.getHours()).padStart(2,"0");
+    const mi = String(d.getMinutes()).padStart(2,"0");
+    return `${mm}/${dd} ${hh}:${mi}`;
+  }
+  function memoTitle(m){
+    const nm = (m.name || "").trim();
+    if (nm) return nm;
+    const first = (m.body || "").split(/\r?\n/)[0].trim();
+    return first ? first.slice(0, 40) : "（無題）";
+  }
+  function setView(next){
+    view = next;
+    if (view === "list"){
+      listView.classList.add("active");
+      editorView.classList.remove("active");
+      // editorView is not overlay; safe for tapping
+      currentMemoId = null;
+      renderList();
     } else {
-      // 開く関数が無いなら、とりあえず一覧描画
-      if (typeof render === "function") render();
+      listView.classList.remove("active");
+      editorView.classList.add("active");
+      renderEditor();
     }
-    return;
+    saveStore();
   }
 
-  // 変なの来たら一覧へ
-  setHashForList();
-}
+  // ====== rendering ======
+  function updateCrumb(){
+    const names = path.map((n,i)=> i===0 ? "ホーム" : (n.name || "（無題フォルダ）"));
+    crumb.textContent = names.join(" / ");
+    crumbSmall.textContent = `（📁${currentNode().folders.length}・📝${currentNode().memos.length}）`;
+    btnUp.disabled = (path.length <= 1);
+    btnRenameFolder.disabled = (path.length <= 1);
+    btnDeleteFolder.disabled = (path.length <= 1);
+  }
 
-function safeBoot(){
-  try { applyHash(); } catch(e){ console.error(e); }
-  try { render(); } catch(e){ console.error(e); }
-}
+  function renderList(){
+    updateCrumb();
+    const q = (searchInput.value || "").trim().toLowerCase();
 
-window.addEventListener("hashchange", () => {
-  try { applyHash(); } catch(e){ console.error(e); }
-  try { render(); } catch(e){ console.error(e); }
-});
+    // folders
+    folderList.innerHTML = "";
+    const folders = currentNode().folders.slice().sort((a,b)=> (a.name||"").localeCompare(b.name||"", "ja"));
+    if (folders.length === 0){
+      folderList.innerHTML = `<div class="empty">フォルダなし</div>`;
+    } else {
+      for (const f of folders){
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `
+          <div class="title">📁 ${escapeHtml(f.name || "（無題フォルダ）")}</div>
+          <div class="meta">${f.folders.length} / ${f.memos.length}</div>
+        `;
+        row.addEventListener("click", () => {
+          path.push(f);
+          saveStore();
+          renderList();
+        });
+        folderList.appendChild(row);
+      }
+    }
 
-// DOMができてから起動（順番事故を潰す）
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", safeBoot);
-} else {
-  safeBoot();
-}
-// 初回：必ず #home を持たせる（これが無いと戻るで外に出やすい）
-if (!location.hash) location.hash = "home";
-applyHash();
-  // ===== ブラウザバック対策：戻るを「アプリ内戻る」にする =====
-(function preventBackLeave() {
-  // 1回ダミーの履歴を積む（これで最初の「戻る」をアプリ側で捕まえられる）
-  history.pushState({ memoApp: true }, "", location.href);
+    // memos
+    memoList.innerHTML = "";
+    let memos = currentNode().memos.slice().sort((a,b)=> (b.updatedAt||0) - (a.updatedAt||0));
+    if (q){
+      memos = memos.filter(m => {
+        const t = memoTitle(m).toLowerCase();
+        const b = (m.body||"").toLowerCase();
+        return t.includes(q) || b.includes(q);
+      });
+    }
+    if (memos.length === 0){
+      memoList.innerHTML = `<div class="empty">${q ? "検索結果なし" : "メモなし"}</div>`;
+    } else {
+      for (const m of memos){
+        const row = document.createElement("div");
+        row.className = "row";
+        const title = memoTitle(m);
+        const count = (m.body || "").length;
+        row.innerHTML = `
+          <div class="title">📝 ${escapeHtml(title)}</div>
+          <div class="meta">${count}字 · ${fmtTime(m.updatedAt || m.createdAt)}</div>
+        `;
+        row.addEventListener("click", () => {
+          currentMemoId = m.id;
+          setView("editor");
+        });
+        memoList.appendChild(row);
+      }
+    }
+  }
 
+  function renderEditor(){
+    updateCrumb();
+    const hit = findMemoById(root, currentMemoId);
+    if (!hit){
+      toast("メモが見つからない");
+      setView("list");
+      return;
+    }
+    const m = hit.memo;
+    memoName.value = m.name || "";
+    memoBody.value = m.body || "";
+    updateCounter();
+    // focusは邪魔なら外してOK
+    memoBody.focus();
+  }
+
+  function updateCounter(){
+    charCount.textContent = `${memoBody.value.length} 文字`;
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // ====== actions ======
+  function addFolder(){
+    const name = prompt("フォルダ名");
+    if (name === null) return;
+    const nm = name.trim();
+    if (!nm){ toast("フォルダ名が空"); return; }
+    // 同名は許可（嫌ならここで弾く）
+    currentNode().folders.push(newNode(nm));
+    saveStore();
+    renderList();
+    toast("フォルダ追加");
+  }
+
+  function renameFolder(){
+    if (path.length <= 1) return;
+    const cur = currentNode();
+    const name = prompt("フォルダ名変更", cur.name || "");
+    if (name === null) return;
+    cur.name = name.trim();
+    saveStore();
+    renderList();
+    toast("変更した");
+  }
+
+  function deleteFolder(){
+    if (path.length <= 1) return;
+    const cur = currentNode();
+    const ok = confirm(`このフォルダを削除？\n「${cur.name || "（無題）"}」\n中身も全部消える`);
+    if (!ok) return;
+    const parent = path[path.length - 2];
+    parent.folders = parent.folders.filter(f => f.id !== cur.id);
+    path.pop();
+    saveStore();
+    renderList();
+    toast("削除した");
+  }
+
+  function addMemo(){
+    const m = newMemo("");
+    currentNode().memos.push(m);
+    saveStore();
+    currentMemoId = m.id;
+    setView("editor");
+    toast("メモ作成");
+  }
+
+  function closeEditor(){
+    setView("list");
+  }
+
+  function deleteMemo(){
+    const hit = findMemoById(root, currentMemoId);
+    if (!hit) return;
+    const title = memoTitle(hit.memo);
+    if (!confirm(`削除する？\n${title}`)) return;
+    hit.parent.memos = hit.parent.memos.filter(x => x.id !== hit.memo.id);
+    saveStore();
+    setView("list");
+    toast("削除した");
+  }
+
+  function duplicateMemo(){
+    const hit = findMemoById(root, currentMemoId);
+    if (!hit) return;
+    const src = hit.memo;
+    const cp = newMemo(src.name ? (src.name + "（複製）") : "");
+    cp.body = src.body || "";
+    cp.updatedAt = now();
+    hit.parent.memos.push(cp);
+    saveStore();
+    currentMemoId = cp.id;
+    renderEditor();
+    toast("複製した");
+  }
+
+  function scheduleAutosave(){
+    clearTimeout(autosaveTimer);
+    saveState.textContent = "編集中…";
+    autosaveTimer = setTimeout(() => {
+      const hit = findMemoById(root, currentMemoId);
+      if (!hit) return;
+      const m = hit.memo;
+      m.name = memoName.value || "";
+      m.body = memoBody.value || "";
+      m.updatedAt = now();
+      saveStore();
+      saveState.textContent = "自動保存";
+      // list側の順番に効くので更新
+    }, 250);
+  }
+
+  function goUp(){
+    if (path.length <= 1) return;
+    path.pop();
+    saveStore();
+    renderList();
+  }
+
+  // ====== events ======
+  btnUp.addEventListener("click", goUp);
+  btnNewFolder.addEventListener("click", addFolder);
+  btnNewMemo.addEventListener("click", addMemo);
+  btnRenameFolder.addEventListener("click", renameFolder);
+  btnDeleteFolder.addEventListener("click", deleteFolder);
+
+  searchInput.addEventListener("input", renderList);
+
+  btnCloseEditor.addEventListener("click", closeEditor);
+  btnDeleteMemo.addEventListener("click", deleteMemo);
+  btnDuplicate.addEventListener("click", duplicateMemo);
+
+  memoBody.addEventListener("input", () => {
+    updateCounter();
+    scheduleAutosave();
+  });
+  memoName.addEventListener("input", scheduleAutosave);
+
+  // Android back: editor -> list / folder -> up
   window.addEventListener("popstate", (e) => {
-    // ここに来た＝戻るが押された
-    // もう一度ダミー履歴を積んで、ブラウザが本当に戻らないようにする
-    history.pushState({ memoApp: true }, "", location.href);
-
-    // ここから「アプリ内の戻る」を実行
-    try {
-      // もし全画面編集が開いてるなら閉じる（関数名はあなたのコードに合わせて調整）
-      if (typeof closeEditor === "function") closeEditor();
-
-      // それ以外は1階層上へ（関数があれば呼ぶ）
-      else if (typeof goUp === "function") goUp();
-
-      // どっちも無ければ、最低限は何もしない（離脱だけ防ぐ）
-    } catch (_) {}
-  });
-
-  // 戻る/進むの復元（bfcache）で描画が崩れる端末があるので、念のため再描画
-  window.addEventListener("pageshow", (ev) => {
-    if (ev.persisted) {
-      try {
-        if (typeof render === "function") render();
-      } catch (_) {}
+    // popstate fires on history navigation; we keep it simple:
+    if (view === "editor"){
+      // don't lose content; autosave already happens
+      setView("list");
+      return;
+    }
+    if (path.length > 1){
+      goUp();
+      return;
     }
   });
+
+  // ====== boot ======
+  // restore last open
+  (function boot(){
+    try{
+      const last = store.lastOpen;
+      if (last && Array.isArray(last.pathIds) && last.pathIds.length){
+        // rebuild path from ids
+        const ids = last.pathIds;
+        const rebuilt = [];
+        let cur = findNodeById(root, ids[0]);
+        if (cur) rebuilt.push(cur);
+        for (let i=1;i<ids.length;i++){
+          const next = findNodeById(root, ids[i]);
+          if (next) rebuilt.push(next);
+        }
+        if (rebuilt.length) path = rebuilt;
+      }
+      renderList();
+      // start in list always（安定優先）
+      setView("list");
+      history.replaceState({app:true}, "", location.href);
+    }catch(e){
+      console.error(e);
+      toast("起動時に復旧した（データは残ってる）");
+      setView("list");
+    }
+  })();
 })();
-/**
- * データ構造（無限階層）
- * root = { folders: {name: node}, memos: {id: {title, text, updatedAt}} }
- */
-const KEY = "memoTreeV1";
-
-function newNode(){ return { folders:{}, memos:{} }; }
-ver root = load() || newNode();
-ver path = []; // ["皇颯","短編",...]
-ver selected = null; // {type:"folder", name} or {type:"memo", id}
-ver editingMemoId = null;
-ver autosaveTimer = null;
-
-// ハッシュ → 状態反映（ここはあなたの既存関数に合わせて中身を呼ぶ）
-function applyHash() {
-  const h = (location.hash || "#home").replace(/^#/, "");
-  if (!h || h === "home") {
-    // 一覧に戻す
-    if (typeof closeEditor === "function") closeEditor();
-    // ルートに戻す（path配列で管理してる前提）
-    if (typeof path !== "undefined") path = [];
-    if (typeof selected !== "undefined") selected = null;
-    if (typeof render === "function") render();
-    return;
-  }
-
-  
-function load(){
-  try { return JSON.parse(localStorage.getItem(KEY)); } catch(e){ return null; }
-}
-function persist(){
-  localStorage.setItem(KEY + "_bak", JSON.stringify(root));
-  localStorage.setItem(KEY, JSON.stringify(root));
-}
-function getNode(p = path){
-  let node = root;
-  for(const name of p){
-    if(!node.folders[name]) node.folders[name] = newNode();
-    node = node.folders[name];
-  }
-  return node;
-}
-function now(){ return Date.now(); }
-
-function updateHeader(){
-  const crumb = path.length ? "📁 / " + path.join(" / ") : "📁 /（ルート）";
-  document.getElementById("breadcrumb").textContent = crumb;
-  document.getElementById("backBtn").disabled = path.length === 0;
-
-  const node = getNode();
-  const folderCount = Object.keys(node.folders).length;
-  const memoCount = Object.keys(node.memos).length;
-  document.getElementById("stats").textContent = `📁${folderCount} 📝${memoCount}`;
-}
-
-function render(){
-  selected = null;
-  updateHeader();
-
-  const node = getNode();
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-
-  // folders first
-  const folderNames = Object.keys(node.folders).sort((a,b)=>a.localeCompare(b,"ja"));
-  for(const name of folderNames){
-    const el = document.createElement("div");
-    el.className = "item";
-    el.innerHTML = `
-      <div class="left">
-        <div class="icon">📁</div>
-        <div style="min-width:0">
-          <div class="name">${escapeHtml(name)}</div>
-          <div class="meta">フォルダ</div>
-        </div>
-      </div>
-      <div class="small">開く</div>
-    `;
-    el.onclick = ()=>openFolder(name);
-    el.oncontextmenu = (e)=>{ e.preventDefault(); select({type:"folder",name}); };
-    el.ontouchstart = ()=>{ /* 端末によって長押し判定が難しいので、タップで選択は別に用意 */ };
-    el.addEventListener("click", (ev)=>{
-      // 普通タップ＝開く。選択したい時は右上の「削除」用にもう一回タップで選択扱いにしてもいいが、
-      // ここはシンプルに「入力欄に名前入れて削除」でも運用できるようにしてる。
-    });
-    list.appendChild(el);
-  }
-
-  // memos
-  const memos = Object.entries(node.memos)
-    .sort((a,b)=> (b[1].updatedAt||0) - (a[1].updatedAt||0));
-
-  for(const [id, m] of memos){
-    const title = (m.title && m.title.trim()) ? m.title.trim() : (m.text||"").split("\n")[0].slice(0,40) || "(無題)";
-    const len = (m.text||"").length;
-    const el = document.createElement("div");
-    el.className = "item";
-    el.innerHTML = `
-      <div class="left">
-        <div class="icon">📝</div>
-        <div style="min-width:0">
-          <div class="name">${escapeHtml(title)}</div>
-          <div class="meta">文字数: ${len}</div>
-        </div>
-      </div>
-      <div class="small">編集</div>
-    `;
-    el.onclick = ()=>openMemo(id);
-    el.oncontextmenu = (e)=>{ e.preventDefault(); select({type:"memo",id}); };
-    list.appendChild(el);
-  }
-
-  if(folderNames.length===0 && memos.length===0){
-    const empty = document.createElement("div");
-    empty.className = "small";
-    empty.style.padding = "10px";
-    empty.textContent = "ここは空。＋フォルダ / ＋メモ から作れる。";
-    list.appendChild(empty);
-  }
-}
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-}
-
-function openFolder(name){
-  path.push(name);
-  render();
-}
-
-function goUp(){
-  if(path.length){ path.pop(); render(); }
-}
-
-function addFolder(){
-  if (path.length >= 10) {
-  alert("これ以上深いフォルダは作れません");
-  return;
-}
-  const name = document.getElementById("nameInput").value.trim();
-  if(!name) return;
-  const node = getNode();
-  if(node.folders[name]) return;
-  node.folders[name] = newNode();
-  persist();
-  document.getElementById("nameInput").value="";
-  render();
-}
-
-function addMemo(){
-  const title = document.getElementById("nameInput").value.trim();
-  const node = getNode();
-  const id = String(now()) + "_" + Math.random().toString(16).slice(2);
-  node.memos[id] = { title: title||"", text:"", updatedAt: now() };
-  persist();
-  document.getElementById("nameInput").value="";
-  render();
-  openMemo(id);
-}
-
-function select(sel){
-  selected = sel;
-}
-
-function deleteCurrent(){
-  const node = getNode();
-
-  // 削除対象の決め方：1) 選択があればそれ 2) 入力欄の名前でフォルダ削除 3) それでもなければ何もしない
-  if(selected){
-    if(selected.type==="folder"){
-      delete node.folders[selected.name];
-      selected=null;
-      persist(); render(); return;
-    }
-    if(selected.type==="memo"){
-      delete node.memos[selected.id];
-      selected=null;
-      persist(); render(); return;
-    }
-  }
-
-  const name = document.getElementById("nameInput").value.trim();
-  if(name && node.folders[name]){
-    delete node.folders[name];
-    persist();
-    document.getElementById("nameInput").value="";
-    render();
-    return;
-  }
-
-  // 何も決まってないなら無視（誤爆防止）
-}
-
-function openMemo(id){
-  const node = getNode();
-  const m = node.memos[id];
-  if(!m) return;
-
-  editingMemoId = id;
-  document.getElementById("editorView").style.display="flex";
-  document.getElementById("editorTitle").textContent = m.title?.trim() ? m.title.trim() : "📝 無題";
-  document.getElementById("editor").value = m.text || "";
-  updateCount();
-
-  // 自動保存（入力停止 600ms）
-  document.getElementById("editor").oninput = ()=>{
-    updateCount();
-    if(autosaveTimer) clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(()=>{ saveNow(true); }, 600);
-  };
-}
-
-function updateCount(){
-  const t = document.getElementById("editor").value || "";
-  document.getElementById("editorCount").textContent = "文字数: " + t.length;
-}
-
-function saveNow(silent=false){
-  if(!editingMemoId) return;
-  const node = getNode();
-  const m = node.memos[editingMemoId];
-  if(!m) return;
-
-  m.text = document.getElementById("editor").value || "";
-  m.updatedAt = now();
-  persist();
-  if(!silent) render(); // 一覧の文字数更新
-}
-
-function closeEditor(){
-  saveNow(true);
-  document.getElementById("editorView").style.display="none";
-  editingMemoId = null;
-  render();
-}
-
- window.addEventListener("hashchange", applyHash);
-applyHash();
-render();
-  
-render();
-
-  // --- 追記: タップ不能(透明レイヤーが吸う)対策 ---
-// editorView が閉じてる時は絶対クリックを吸わない
-(function () {
-  const ev = document.getElementById("editorView");
-  if (!ev) return;
-
-  // 初期状態を安全側に
-  ev.style.pointerEvents = "none";
-
-  // displayが変わったら自動でpointer-eventsを切り替える
-  const obs = new MutationObserver(() => {
-    const isOpen = getComputedStyle(ev).display !== "none";
-    ev.style.pointerEvents = isOpen ? "auto" : "none";
-  });
-  obs.observe(ev, { attributes: true, attributeFilter: ["style", "class"] });
-
-  // 念のため、ロード直後にも一回判定
-  const isOpenNow = getComputedStyle(ev).display !== "none";
-  ev.style.pointerEvents = isOpenNow ? "auto" : "none";
-})();
-  
 </script>
 </body>
 </html>
