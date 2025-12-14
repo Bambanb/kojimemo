@@ -83,6 +83,11 @@ function setHashForList() {
   if (location.hash !== "#home") location.hash = "home";
 }
 
+  // フォルダに入る前に「戻り先」をアプリ内に作る
+if (location.hash === "#home") {
+  history.pushState({ app: true }, "", location.href); // 1個だけ履歴を増やす（中身同じでOK）
+}
+setHashForFolder(path);
 function setHashForFolder(pathArr) {
   const p = (pathArr || []).map(enc).join("/");
   location.hash = "f=" + p;
