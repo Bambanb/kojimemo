@@ -74,6 +74,70 @@
 </div>
 
 <script>
+  // ===== 画面遷移を #（ハッシュ）で管理して、戻るでページが消えないようにする =====
+function enc(s){ return encodeURIComponent(s); }
+function dec(s){ return decodeURIComponent(s || ""); }
+
+// 状態 → ハッシュ
+function setHashForList() {
+  if (location.hash !== "#home") location.hash = "home";
+}
+
+function setHashForFolder(pathArr) {
+  const p = (pathArr || []).map(enc).join("/");
+  location.hash = "f=" + p;
+}
+
+function setHashForMemo(id) {
+  location.hash = "m=" + enc(String(id));
+}
+
+// ハッシュ → 状態反映（ここはあなたの既存関数に合わせて中身を呼ぶ）
+function applyHash() {
+  const h = (location.hash || "#home").replace(/^#/, "");
+  if (!h || h === "home") {
+    // 一覧に戻す
+    if (typeof closeEditor === "function") closeEditor();
+    // ルートに戻す（path配列で管理してる前提）
+    if (typeof path !== "undefined") path = [];
+    if (typeof selected !== "undefined") selected = null;
+    if (typeof render === "function") render();
+    return;
+  }
+
+  if (h.startsWith("f=")) {
+    const p = dec(h.slice(2));
+    const arr = p ? p.split("/").map(dec) : [];
+    if (typeof closeEditor === "function") closeEditor();
+    if (typeof path !== "undefined") path = arr;
+    if (typeof selected !== "undefined") selected = null;
+    if (typeof render === "function") render();
+    return;
+  }
+
+  if (h.startsWith("m=")) {
+    const id = dec(h.slice(2));
+    // 編集画面を開く（関数名はあなたのコードに合わせて）
+    if (typeof openEditorById === "function") {
+      openEditorById(id);
+    } else if (typeof openEditor === "function") {
+      openEditor(id);
+    } else {
+      // 開く関数が無いなら、とりあえず一覧描画
+      if (typeof render === "function") render();
+    }
+    return;
+  }
+
+  // 変なの来たら一覧へ
+  setHashForList();
+}
+
+window.addEventListener("hashchange", applyHash);
+
+// 初回：必ず #home を持たせる（これが無いと戻るで外に出やすい）
+if (!location.hash) location.hash = "home";
+applyHash();
   // ===== ブラウザバック対策：戻るを「アプリ内戻る」にする =====
 (function preventBackLeave() {
   // 1回ダミーの履歴を積む（これで最初の「戻る」をアプリ側で捕まえられる）
