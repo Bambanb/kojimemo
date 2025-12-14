@@ -25,13 +25,20 @@
   .name{font-weight:700;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .meta{font-size:12px;opacity:.65;margin-top:2px;}
   .small{font-size:12px;opacity:.7;}
-  #editorView{position:fixed;inset:0;background:#f4f6f8;display:none;flex-direction:column;}
+  #editorView{pointer-events: none;display: none; /* これが既にあるならOK */
+    position:fixed;inset:0;background:#f4f6f8;display:none;flex-direction:column;}
   #editorHeader{background:#2d6cdf;color:#fff;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
   #editorHeader .hleft{display:flex;flex-direction:column;gap:2px;min-width:0;}
   #editorTitle{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   #editorCount{font-size:12px;opacity:.9;}
   #editorActions{display:flex;gap:8px;flex:0 0 auto;}
   textarea{flex:1;width:100%;border:none;outline:none;padding:12px;font-size:16px;line-height:1.7;resize:none;background:#fff;}
+
+#editorView { pointer-events: none; }
+#editorView[style*="display: flex"], 
+#editorView[style*="display:flex"],
+#editorView[style*="display: block"],
+#editorView[style*="display:block"] { pointer-events: auto; }
 </style>
 </head>
 <body>
@@ -419,6 +426,28 @@ applyHash();
 render();
   
 render();
+
+  // --- 追記: タップ不能(透明レイヤーが吸う)対策 ---
+// editorView が閉じてる時は絶対クリックを吸わない
+(function () {
+  const ev = document.getElementById("editorView");
+  if (!ev) return;
+
+  // 初期状態を安全側に
+  ev.style.pointerEvents = "none";
+
+  // displayが変わったら自動でpointer-eventsを切り替える
+  const obs = new MutationObserver(() => {
+    const isOpen = getComputedStyle(ev).display !== "none";
+    ev.style.pointerEvents = isOpen ? "auto" : "none";
+  });
+  obs.observe(ev, { attributes: true, attributeFilter: ["style", "class"] });
+
+  // 念のため、ロード直後にも一回判定
+  const isOpenNow = getComputedStyle(ev).display !== "none";
+  ev.style.pointerEvents = isOpenNow ? "auto" : "none";
+})();
+  
 </script>
 </body>
 </html>
