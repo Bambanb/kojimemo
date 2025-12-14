@@ -91,6 +91,7 @@ function load(){
   try { return JSON.parse(localStorage.getItem(KEY)); } catch(e){ return null; }
 }
 function persist(){
+  localStorage.setItem(KEY + "_bak", JSON.stringify(root));
   localStorage.setItem(KEY, JSON.stringify(root));
 }
 function getNode(p = path){
@@ -194,6 +195,10 @@ function goUp(){
 }
 
 function addFolder(){
+  if (path.length >= 10) {
+  alert("これ以上深いフォルダは作れません");
+  return;
+}
   const name = document.getElementById("nameInput").value.trim();
   if(!name) return;
   const node = getNode();
