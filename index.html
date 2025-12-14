@@ -5,174 +5,293 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>メモ帳</title>
 <style>
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  background: #f4f6f8;
-}
-header {
-  background: #2d6cdf;
-  color: white;
-  padding: 12px;
-  font-size: 18px;
-}
-#app {
-  padding: 12px;
-}
-.list-item {
-  background: white;
-  padding: 10px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.list-item span {
-  font-weight: 500;
-}
-button {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 4px;
-}
-.primary { background:#2d6cdf; color:white; }
-.danger { background:#e55353; color:white; }
-.small { font-size:12px; opacity:0.7; }
-
-textarea {
-  width: 100%;
-  height: calc(100vh - 140px);
-  resize: none;
-  font-size: 16px;
-  line-height: 1.6;
-}
-.hidden { display:none; }
+  body{margin:0;font-family:system-ui,-apple-system;background:#f4f6f8;}
+  header{background:#2d6cdf;color:#fff;padding:12px 12px 10px;position:sticky;top:0;z-index:10;}
+  .toprow{display:flex;gap:8px;align-items:center;justify-content:space-between;}
+  .title{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .crumb{font-size:12px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px;}
+  #app{padding:12px;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  input{padding:10px;border:1px solid #d9dee6;border-radius:8px;flex:1;min-width:180px;background:#fff;}
+  button{padding:10px 12px;border:none;border-radius:10px;font-weight:600;}
+  .primary{background:#2d6cdf;color:#fff;}
+  .ghost{background:#fff;border:1px solid #d9dee6;}
+  .danger{background:#ffecec;border:1px solid #ffb7b7;color:#b00020;}
+  .card{background:#fff;border-radius:14px;padding:10px;border:1px solid #e6ebf2;}
+  .list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .item{background:#fff;border:1px solid #e6ebf2;border-radius:12px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .left{display:flex;align-items:center;gap:10px;min-width:0;}
+  .icon{font-size:18px;flex:0 0 auto;}
+  .name{font-weight:700;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .meta{font-size:12px;opacity:.65;margin-top:2px;}
+  .small{font-size:12px;opacity:.7;}
+  #editorView{position:fixed;inset:0;background:#f4f6f8;display:none;flex-direction:column;}
+  #editorHeader{background:#2d6cdf;color:#fff;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  #editorHeader .hleft{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  #editorTitle{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #editorCount{font-size:12px;opacity:.9;}
+  #editorActions{display:flex;gap:8px;flex:0 0 auto;}
+  textarea{flex:1;width:100%;border:none;outline:none;padding:12px;font-size:16px;line-height:1.7;resize:none;background:#fff;}
 </style>
 </head>
 <body>
-
-<header id="header">📁 フォルダ</header>
+  <header>
+  <div class="toprow">
+    <div class="title">🗂 メモ帳</div>
+    <div class="small" id="stats"></div>
+  </div>
+  <div class="crumb" id="breadcrumb"></div>
+</header>
 
 <div id="app">
-
-<!-- フォルダ一覧 -->
-<div id="folderView">
-  <div class="list-item">
-    <input id="newFolderName" placeholder="新しいフォルダ名">
-    <button class="primary" onclick="addFolder()">＋</button>
+  <div class="toolbar">
+    <button class="ghost" id="backBtn" onclick="goUp()">← 上へ</button>
+    <input id="nameInput" placeholder="フォルダ名 / メモ名">
+    <button class="primary" onclick="addFolder()">＋フォルダ</button>
+    <button class="primary" onclick="addMemo()">＋メモ</button>
+    <button class="danger" onclick="deleteCurrent()">🗑 削除</button>
   </div>
-  <div id="folderList"></div>
+
+  <div class="card">
+    <div class="small">今いる場所の中身（フォルダとメモが一緒に並ぶ）</div>
+    <div class="list" id="list"></div>
+  </div>
 </div>
 
-<!-- メモ一覧 -->
-<div id="memoView" class="hidden">
-  <button onclick="backToFolders()">← フォルダへ戻る</button>
-  <button class="primary" onclick="newMemo()">＋ 新規メモ</button>
-  <div id="memoList"></div>
-</div>
-
-<!-- 編集画面 -->
-<div id="editorView" class="hidden">
-  <button onclick="backToMemos()">← 一覧へ戻る</button>
-  <div class="small">文字数: <span id="count">0</span></div>
-  <textarea id="editor"></textarea>
-</div>
-
+<!-- Editor (全画面) -->
+<div id="editorView">
+  <div id="editorHeader">
+    <div class="hleft">
+      <div id="editorTitle">編集</div>
+      <div id="editorCount">文字数: 0</div>
+    </div>
+    <div id="editorActions">
+      <button class="ghost" onclick="closeEditor()">閉じる</button>
+      <button class="primary" onclick="saveNow()">保存</button>
+    </div>
+  </div>
+  <textarea id="editor" placeholder="ここに本文…"></textarea>
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("memoData") || "{}");
-let currentFolder = "";
-let currentMemo = "";
+/**
+ * データ構造（無限階層）
+ * root = { folders: {name: node}, memos: {id: {title, text, updatedAt}} }
+ */
+const KEY = "memoTreeV1";
 
-function save() {
-  localStorage.setItem("memoData", JSON.stringify(data));
+function newNode(){ return { folders:{}, memos:{} }; }
+let root = load() || newNode();
+let path = []; // ["皇颯","短編",...]
+let selected = null; // {type:"folder", name} or {type:"memo", id}
+let editingMemoId = null;
+let autosaveTimer = null;
+
+function load(){
+  try { return JSON.parse(localStorage.getItem(KEY)); } catch(e){ return null; }
+}
+function persist(){
+  localStorage.setItem(KEY, JSON.stringify(root));
+}
+function getNode(p = path){
+  let node = root;
+  for(const name of p){
+    if(!node.folders[name]) node.folders[name] = newNode();
+    node = node.folders[name];
+  }
+  return node;
+}
+function now(){ return Date.now(); }
+
+function updateHeader(){
+  const crumb = path.length ? "📁 / " + path.join(" / ") : "📁 /（ルート）";
+  document.getElementById("breadcrumb").textContent = crumb;
+  document.getElementById("backBtn").disabled = path.length === 0;
+
+  const node = getNode();
+  const folderCount = Object.keys(node.folders).length;
+  const memoCount = Object.keys(node.memos).length;
+  document.getElementById("stats").textContent = `📁${folderCount} 📝${memoCount}`;
 }
 
-function renderFolders() {
-  const list = document.getElementById("folderList");
+function render(){
+  selected = null;
+  updateHeader();
+
+  const node = getNode();
+  const list = document.getElementById("list");
   list.innerHTML = "";
-  Object.keys(data).forEach(name => {
-    const div = document.createElement("div");
-    div.className = "list-item";
-    div.innerHTML = `<span>${name}</span>`;
-    div.onclick = () => openFolder(name);
-    list.appendChild(div);
-  });
+
+  // folders first
+  const folderNames = Object.keys(node.folders).sort((a,b)=>a.localeCompare(b,"ja"));
+  for(const name of folderNames){
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="left">
+        <div class="icon">📁</div>
+        <div style="min-width:0">
+          <div class="name">${escapeHtml(name)}</div>
+          <div class="meta">フォルダ</div>
+        </div>
+      </div>
+      <div class="small">開く</div>
+    `;
+    el.onclick = ()=>openFolder(name);
+    el.oncontextmenu = (e)=>{ e.preventDefault(); select({type:"folder",name}); };
+    el.ontouchstart = ()=>{ /* 端末によって長押し判定が難しいので、タップで選択は別に用意 */ };
+    el.addEventListener("click", (ev)=>{
+      // 普通タップ＝開く。選択したい時は右上の「削除」用にもう一回タップで選択扱いにしてもいいが、
+      // ここはシンプルに「入力欄に名前入れて削除」でも運用できるようにしてる。
+    });
+    list.appendChild(el);
+  }
+
+  // memos
+  const memos = Object.entries(node.memos)
+    .sort((a,b)=> (b[1].updatedAt||0) - (a[1].updatedAt||0));
+
+  for(const [id, m] of memos){
+    const title = (m.title && m.title.trim()) ? m.title.trim() : (m.text||"").split("\n")[0].slice(0,40) || "(無題)";
+    const len = (m.text||"").length;
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="left">
+        <div class="icon">📝</div>
+        <div style="min-width:0">
+          <div class="name">${escapeHtml(title)}</div>
+          <div class="meta">文字数: ${len}</div>
+        </div>
+      </div>
+      <div class="small">編集</div>
+    `;
+    el.onclick = ()=>openMemo(id);
+    el.oncontextmenu = (e)=>{ e.preventDefault(); select({type:"memo",id}); };
+    list.appendChild(el);
+  }
+
+  if(folderNames.length===0 && memos.length===0){
+    const empty = document.createElement("div");
+    empty.className = "small";
+    empty.style.padding = "10px";
+    empty.textContent = "ここは空。＋フォルダ / ＋メモ から作れる。";
+    list.appendChild(empty);
+  }
 }
 
-function addFolder() {
-  const name = newFolderName.value.trim();
-  if (!name || data[name]) return;
-  data[name] = {};
-  save();
-  newFolderName.value = "";
-  renderFolders();
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 }
 
-function openFolder(name) {
-  currentFolder = name;
-  header.textContent = "📁 " + name;
-  folderView.classList.add("hidden");
-  memoView.classList.remove("hidden");
-  renderMemos();
+function openFolder(name){
+  path.push(name);
+  render();
 }
 
-function renderMemos() {
-  const list = memoList;
-  list.innerHTML = "";
-  Object.keys(data[currentFolder]).forEach(id => {
-    const div = document.createElement("div");
-    div.className = "list-item";
-    const text = data[currentFolder][id];
-    const title = text.split("\n")[0] || "(無題)";
-    div.innerHTML = `<span>${title}</span>`;
-    div.onclick = () => openMemo(id);
-    list.appendChild(div);
-  });
+function goUp(){
+  if(path.length){ path.pop(); render(); }
 }
 
-function newMemo() {
-  const id = Date.now().toString();
-  data[currentFolder][id] = "";
-  save();
+function addFolder(){
+  const name = document.getElementById("nameInput").value.trim();
+  if(!name) return;
+  const node = getNode();
+  if(node.folders[name]) return;
+  node.folders[name] = newNode();
+  persist();
+  document.getElementById("nameInput").value="";
+  render();
+}
+
+function addMemo(){
+  const title = document.getElementById("nameInput").value.trim();
+  const node = getNode();
+  const id = String(now()) + "_" + Math.random().toString(16).slice(2);
+  node.memos[id] = { title: title||"", text:"", updatedAt: now() };
+  persist();
+  document.getElementById("nameInput").value="";
+  render();
   openMemo(id);
 }
 
-function openMemo(id) {
-  currentMemo = id;
-  memoView.classList.add("hidden");
-  editorView.classList.remove("hidden");
-  editor.value = data[currentFolder][id];
+function select(sel){
+  selected = sel;
+}
+
+function deleteCurrent(){
+  const node = getNode();
+
+  // 削除対象の決め方：1) 選択があればそれ 2) 入力欄の名前でフォルダ削除 3) それでもなければ何もしない
+  if(selected){
+    if(selected.type==="folder"){
+      delete node.folders[selected.name];
+      selected=null;
+      persist(); render(); return;
+    }
+    if(selected.type==="memo"){
+      delete node.memos[selected.id];
+      selected=null;
+      persist(); render(); return;
+    }
+  }
+
+  const name = document.getElementById("nameInput").value.trim();
+  if(name && node.folders[name]){
+    delete node.folders[name];
+    persist();
+    document.getElementById("nameInput").value="";
+    render();
+    return;
+  }
+
+  // 何も決まってないなら無視（誤爆防止）
+}
+
+function openMemo(id){
+  const node = getNode();
+  const m = node.memos[id];
+  if(!m) return;
+
+  editingMemoId = id;
+  document.getElementById("editorView").style.display="flex";
+  document.getElementById("editorTitle").textContent = m.title?.trim() ? m.title.trim() : "📝 無題";
+  document.getElementById("editor").value = m.text || "";
   updateCount();
+
+  // 自動保存（入力停止 600ms）
+  document.getElementById("editor").oninput = ()=>{
+    updateCount();
+    if(autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(()=>{ saveNow(true); }, 600);
+  };
 }
 
-function backToFolders() {
-  memoView.classList.add("hidden");
-  folderView.classList.remove("hidden");
-  header.textContent = "📁 フォルダ";
-  renderFolders();
+function updateCount(){
+  const t = document.getElementById("editor").value || "";
+  document.getElementById("editorCount").textContent = "文字数: " + t.length;
 }
 
-function backToMemos() {
-  editorView.classList.add("hidden");
-  memoView.classList.remove("hidden");
-  renderMemos();
+function saveNow(silent=false){
+  if(!editingMemoId) return;
+  const node = getNode();
+  const m = node.memos[editingMemoId];
+  if(!m) return;
+
+  m.text = document.getElementById("editor").value || "";
+  m.updatedAt = now();
+  persist();
+  if(!silent) render(); // 一覧の文字数更新
 }
 
-editor.addEventListener("input", () => {
-  data[currentFolder][currentMemo] = editor.value;
-  save();
-  updateCount();
-});
-
-function updateCount() {
-  count.textContent = editor.value.length;
+function closeEditor(){
+  saveNow(true);
+  document.getElementById("editorView").style.display="none";
+  editingMemoId = null;
+  render();
 }
 
-renderFolders();
+render();
 </script>
-
 </body>
 </html>
