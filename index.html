@@ -1,1 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ帳</title>
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background: #f4f6f8;
+}
+header {
+  background: #2d6cdf;
+  color: white;
+  padding: 12px;
+  font-size: 18px;
+}
+#app {
+  padding: 12px;
+}
+.list-item {
+  background: white;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.list-item span {
+  font-weight: 500;
+}
+button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+}
+.primary { background:#2d6cdf; color:white; }
+.danger { background:#e55353; color:white; }
+.small { font-size:12px; opacity:0.7; }
 
+textarea {
+  width: 100%;
+  height: calc(100vh - 140px);
+  resize: none;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.hidden { display:none; }
+</style>
+</head>
+<body>
+
+<header id="header">📁 フォルダ</header>
+
+<div id="app">
+
+<!-- フォルダ一覧 -->
+<div id="folderView">
+  <div class="list-item">
+    <input id="newFolderName" placeholder="新しいフォルダ名">
+    <button class="primary" onclick="addFolder()">＋</button>
+  </div>
+  <div id="folderList"></div>
+</div>
+
+<!-- メモ一覧 -->
+<div id="memoView" class="hidden">
+  <button onclick="backToFolders()">← フォルダへ戻る</button>
+  <button class="primary" onclick="newMemo()">＋ 新規メモ</button>
+  <div id="memoList"></div>
+</div>
+
+<!-- 編集画面 -->
+<div id="editorView" class="hidden">
+  <button onclick="backToMemos()">← 一覧へ戻る</button>
+  <div class="small">文字数: <span id="count">0</span></div>
+  <textarea id="editor"></textarea>
+</div>
+
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("memoData") || "{}");
+let currentFolder = "";
+let currentMemo = "";
+
+function save() {
+  localStorage.setItem("memoData", JSON.stringify(data));
+}
+
+function renderFolders() {
+  const list = document.getElementById("folderList");
+  list.innerHTML = "";
+  Object.keys(data).forEach(name => {
+    const div = document.createElement("div");
+    div.className = "list-item";
+    div.innerHTML = `<span>${name}</span>`;
+    div.onclick = () => openFolder(name);
+    list.appendChild(div);
+  });
+}
+
+function addFolder() {
+  const name = newFolderName.value.trim();
+  if (!name || data[name]) return;
+  data[name] = {};
+  save();
+  newFolderName.value = "";
+  renderFolders();
+}
+
+function openFolder(name) {
+  currentFolder = name;
+  header.textContent = "📁 " + name;
+  folderView.classList.add("hidden");
+  memoView.classList.remove("hidden");
+  renderMemos();
+}
+
+function renderMemos() {
+  const list = memoList;
+  list.innerHTML = "";
+  Object.keys(data[currentFolder]).forEach(id => {
+    const div = document.createElement("div");
+    div.className = "list-item";
+    const text = data[currentFolder][id];
+    const title = text.split("\n")[0] || "(無題)";
+    div.innerHTML = `<span>${title}</span>`;
+    div.onclick = () => openMemo(id);
+    list.appendChild(div);
+  });
+}
+
+function newMemo() {
+  const id = Date.now().toString();
+  data[currentFolder][id] = "";
+  save();
+  openMemo(id);
+}
+
+function openMemo(id) {
+  currentMemo = id;
+  memoView.classList.add("hidden");
+  editorView.classList.remove("hidden");
+  editor.value = data[currentFolder][id];
+  updateCount();
+}
+
+function backToFolders() {
+  memoView.classList.add("hidden");
+  folderView.classList.remove("hidden");
+  header.textContent = "📁 フォルダ";
+  renderFolders();
+}
+
+function backToMemos() {
+  editorView.classList.add("hidden");
+  memoView.classList.remove("hidden");
+  renderMemos();
+}
+
+editor.addEventListener("input", () => {
+  data[currentFolder][currentMemo] = editor.value;
+  save();
+  updateCount();
+});
+
+function updateCount() {
+  count.textContent = editor.value.length;
+}
+
+renderFolders();
+</script>
+
+</body>
+</html>
