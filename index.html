@@ -2,678 +2,781 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>メモ帳アプリ</title>
   <style>
     :root{
-      --bg:#f3f6fb; --card:#ffffff; --ink:#0f172a; --muted:#64748b;
-      --brand:#3b82f6; --brand2:#2563eb; --border:#e5e7eb;
-      --danger:#ef4444; --ok:#10b981;
-      --shadow: 0 10px 25px rgba(2,6,23,.08);
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --ink:#1b1f2a;
+      --muted:#6b7280;
+      --line:#e6eaf2;
+      --pri:#2563eb;
+      --pri2:#1d4ed8;
+      --danger:#ef4444;
+      --ok:#10b981;
+      --shadow:0 10px 25px rgba(16,24,40,.08);
       --r:16px;
-      --pad:14px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; background:linear-gradient(180deg,#eef5ff, var(--bg));
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+      margin:0;
+      background:linear-gradient(180deg,#eef4ff 0%, var(--bg) 35%);
       color:var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+    }
+    .app{
+      max-width:980px;
+      margin:0 auto;
+      min-height:100%;
+      padding:14px 14px 24px;
     }
     header{
-      position:sticky; top:0; z-index:5;
-      background:linear-gradient(90deg,var(--brand),var(--brand2));
-      color:#fff; padding:18px 14px;
-      box-shadow: 0 8px 20px rgba(37,99,235,.25);
+      background:linear-gradient(135deg, #2563eb 0%, #3b82f6 55%, #60a5fa 100%);
+      color:#fff;
+      border-radius:18px;
+      padding:16px 16px 14px;
+      box-shadow:var(--shadow);
+      position:sticky;
+      top:10px;
+      z-index:10;
     }
-    header .title{
-      display:flex; align-items:center; gap:10px;
-      font-weight:800; letter-spacing:.02em; font-size:20px;
-      justify-content:center;
+    .title{
+      display:flex;align-items:center;gap:10px;
+      font-weight:800;font-size:20px;
+      letter-spacing:.5px;
     }
-    header .sub{
-      display:flex; justify-content:center; gap:10px;
-      margin-top:8px; font-size:12px; opacity:.92;
+    .sub{
+      margin-top:6px;
+      font-size:12px;
+      opacity:.9;
     }
-    .wrap{
-      max-width:1100px; margin:14px auto; padding:0 12px 18px;
-    }
-    .grid{
-      display:grid; gap:12px;
-      grid-template-columns: 1fr;
-    }
-    @media(min-width:860px){
-      .grid{ grid-template-columns: 360px 1fr; }
-    }
+
+    .screen{ display:none; margin-top:14px; }
+    .screen.active{ display:block; }
+
     .card{
-      background:var(--card); border:1px solid var(--border);
-      border-radius: var(--r); box-shadow: var(--shadow);
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
       overflow:hidden;
     }
-    .card h2{
-      margin:0; padding:14px; font-size:16px;
-      border-bottom:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between;
+    .card-h{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
       gap:10px;
     }
-    .card h2 .small{font-size:12px; color:var(--muted); font-weight:600}
-    .card .body{ padding:14px; }
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .row + .row{ margin-top:10px; }
-
-    input[type="text"], textarea, select{
-      width:100%;
-      font:inherit;
-      padding:12px;
-      border:1px solid var(--border);
-      border-radius: 12px;
-      outline:none;
-      background:#fff;
-    }
-    textarea{ min-height: 160px; resize: vertical; }
-
-    .btn{
-      border:0; border-radius: 14px;
-      padding:12px 14px;
+    .card-h h2{
+      margin:0;
+      font-size:16px;
       font-weight:800;
-      cursor:pointer;
-      background: #e2e8f0;
-      color: var(--ink);
-      box-shadow: 0 6px 14px rgba(2,6,23,.06);
-      display:inline-flex; gap:10px; align-items:center; justify-content:center;
-      user-select:none;
     }
-    .btn:active{ transform: translateY(1px); }
-    .btn.primary{ background: linear-gradient(90deg,var(--brand),var(--brand2)); color:#fff; }
-    .btn.ghost{ background:#fff; border:1px solid var(--border); box-shadow:none; }
-    .btn.danger{ background: #fee2e2; color:#991b1b; }
-    .btn.ok{ background: #dcfce7; color:#065f46; }
-
-    .list{
-      margin-top:10px;
-      border-top:1px solid var(--border);
-    }
-    .item{
-      padding:12px 14px;
-      border-bottom:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      cursor:pointer;
-    }
-    .item:hover{ background:#f8fafc; }
-    .item.active{ background:#eff6ff; }
-    .meta{ color:var(--muted); font-size:12px; }
-    .titleline{ font-weight:800; }
-    .badge{
-      font-size:12px; font-weight:800; color:#fff;
-      background: #0f172a;
-      padding:6px 10px; border-radius: 999px;
-      opacity:.85;
-      white-space:nowrap;
-    }
-    .badge.muted{ background:#334155; }
-    .hint{
-      color:var(--muted); font-size:12px; line-height:1.6;
-    }
-    .split{
-      display:grid; gap:10px; grid-template-columns: 1fr;
-    }
-    @media(min-width:520px){
-      .split{ grid-template-columns: 1fr auto; align-items:center; }
-    }
-
-    /* Fullscreen editor */
-    .overlay{
-      position:fixed; inset:0; z-index:50;
-      background: rgba(2,6,23,.55);
-      display:none;
-      padding: 10px;
-    }
-    .overlay.show{ display:block; }
-    .sheet{
-      height:100%;
-      background: var(--card);
-      border-radius: 18px;
-      border:1px solid var(--border);
-      box-shadow: 0 25px 60px rgba(2,6,23,.25);
-      display:flex; flex-direction:column;
-      overflow:hidden;
-    }
-    .sheetbar{
-      padding:12px 12px;
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      border-bottom:1px solid var(--border);
-      background: #f8fafc;
-    }
-    .sheetbar .left, .sheetbar .right{ display:flex; align-items:center; gap:8px; }
-    .sheetbar .name{
-      font-weight:900;
-      max-width: 52vw;
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    }
-    .sheetbar .count{ color:var(--muted); font-size:12px; font-weight:800; }
-    .sheetcontent{ padding:12px; display:flex; flex-direction:column; gap:10px; flex:1; }
-    .sheetcontent textarea{
-      flex:1;
-      min-height: 55vh;
-      resize:none;
-      border-radius: 14px;
-      line-height: 1.75;
+    .card-b{
       padding:14px;
     }
-    .sheetcontent input[type="text"]{
+
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .row > *{ flex: 1 1 auto; }
+
+    .btn{
+      border:0;
+      border-radius:12px;
+      padding:11px 12px;
       font-weight:800;
+      cursor:pointer;
+      transition:.12s transform, .12s opacity, .12s background;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:44px;
     }
-    .toast{
-      position:fixed; left:50%; bottom:20px; transform:translateX(-50%);
-      background:#0f172a; color:#fff; padding:10px 14px;
-      border-radius: 999px; font-weight:800; font-size:12px;
-      opacity:0; pointer-events:none;
-      transition:opacity .18s ease, transform .18s ease;
-      z-index:60;
+    .btn:active{ transform:scale(.98) }
+    .btn.pri{ background:var(--pri); color:#fff; }
+    .btn.pri:hover{ background:var(--pri2); }
+    .btn.ghost{ background:#eef2ff; color:#1e3a8a; }
+    .btn.danger{ background:#fee2e2; color:#991b1b; }
+    .btn.gray{ background:#f1f5f9; color:#0f172a; }
+
+    input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:12px 12px;
+      font-size:15px;
+      outline:none;
     }
-    .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
-    .smalllink{ font-size:12px; color:#2563eb; font-weight:800; cursor:pointer; user-select:none; }
-    .hr{ height:1px; background:var(--border); margin:10px 0; }
+    textarea{
+      resize:none;
+      min-height:52vh;
+      line-height:1.6;
+      font-family: inherit;
+      white-space: pre-wrap; /* 勝手に整形しない */
+    }
+    .muted{ color:var(--muted); font-size:12px; }
+    .kpi{ font-weight:900; }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:12px;
+    }
+    .item{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 12px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      background:#fff;
+    }
+    .item:hover{ outline:2px solid rgba(37,99,235,.08); }
+    .item .meta{ flex:1; min-width:0; }
+    .item .t{
+      font-weight:900;
+      font-size:15px;
+      margin:0 0 6px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .item .p{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+      overflow:hidden;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      word-break:break-word;
+    }
+    .item .right{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+      min-width:110px;
+    }
+    .chip{
+      font-size:12px;
+      font-weight:900;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#eef2ff;
+      color:#1e3a8a;
+      white-space:nowrap;
+    }
+    .mini{
+      padding:8px 10px;
+     border-radius:10px;
+     min-height:36px;
+     font-weight:900;
+     font-size:13px;
+    }
+    .mini.gray{ background:#f1f5f9; color:#0f172a; }
+    .mini.danger{ background:#fee2e2; color:#991b1b; }
+
+    .footerbar{
+      position:sticky;
+      bottom:10px;
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+    }
+    .footerbar .btn{ flex:1; }
+
+    .topbar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      background:#ffffffcc;
+      border:1px solid rgba(255,255,255,.35);
+      backdrop-filter: blur(8px);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+    }
+    .pill b{ font-size:13px; }
+
+    /* Editor fullscreen feel */
+    .editor-wrap{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .editor-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .editor-top .left{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .count{
+      font-weight:900;
+      color:#0f172a;
+    }
+    .dangerText{ color: #991b1b; font-weight:900; }
+
+    @media (max-width:540px){
+      .item{ flex-direction:column; }
+      .item .right{ align-items:flex-start; min-width:0; width:100%; flex-direction:row; }
+      textarea{ min-height:56vh; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="title">📝 メモ帳アプリ</div>
-    <div class="sub">
-      <span>フォルダ無限</span>
-      <span>・</span>
-      <span>リアルタイム文字数</span>
-      <span>・</span>
-      <span>勝手に整形しない</span>
-    </div>
-  </header>
+  <div class="app">
+    <header>
+      <div class="topbar">
+        <div class="title">📝 メモ帳アプリ</div>
+        <div class="pill">📁 <b id="pillFolder">メモ</b>　｜　文字数 <b id="pillCount">0</b></div>
+      </div>
+      <div class="sub">フォルダ無限・リアルタイム文字数・勝手に整形しない（全角スペース／改行そのまま）</div>
+    </header>
 
-  <div class="wrap">
-    <div class="grid">
-      <!-- Left: folders -->
-      <section class="card">
-        <h2>
-          <span>📁 フォルダ</span>
-          <span class="small" id="folderCount"></span>
-        </h2>
-        <div class="body">
-          <div class="row">
-            <input id="newFolderName" type="text" placeholder="新しいフォルダ名" />
-            <button class="btn primary" id="addFolderBtn">＋ フォルダ追加</button>
-          </div>
-
-          <div class="row" style="margin-top:10px">
-            <select id="folderSelect"></select>
-          </div>
-
-          <div class="row">
-            <input id="renameFolderInput" type="text" placeholder="選択中フォルダ名を変更" />
-            <button class="btn ghost" id="renameFolderBtn">✏️ 名前変更</button>
-            <button class="btn danger" id="deleteFolderBtn">🗑️ フォルダ削除</button>
-          </div>
-
-          <div class="hr"></div>
-          <div class="hint">
-            ・フォルダもメモも <b>localStorage</b> に保存（端末/ブラウザ単位）。<br/>
-            ・強制整形なし。全角スペースも改行もそのまま。<br/>
-            ・念のため自動保存あり（入力停止600ms）。
-          </div>
+    <!-- ① 一覧画面 -->
+    <section id="screenList" class="screen active">
+      <div class="card">
+        <div class="card-h">
+          <h2>メモ一覧</h2>
+          <button class="btn ghost mini" id="btnGoManage">📁 管理</button>
         </div>
-      </section>
-
-      <!-- Right: notes list + quick editor launch -->
-      <section class="card">
-        <h2>
-          <span id="rightTitle">メモ</span>
-          <span class="small" id="noteCount"></span>
-        </h2>
-        <div class="body">
-          <div class="split">
-            <div class="row" style="flex:1">
-              <button class="btn primary" id="newNoteBtn">🗒️ 新規メモ</button>
-              <button class="btn ghost" id="openEditorBtn" disabled>🖊️ 編集（全画面）</button>
-              <button class="btn ghost" id="exportBtn">⬇️ 退避</button>
-              <label class="btn ghost" style="gap:8px">
-                ⬆️ 取込
-                <input id="importFile" type="file" accept="application/json" hidden />
-              </label>
+        <div class="card-b">
+          <div class="row" style="gap:10px; margin-bottom:10px;">
+            <div style="flex: 1 1 220px;">
+              <select id="folderSelect"></select>
             </div>
-            <div class="row" style="justify-content:flex-end">
-              <span class="hint">選択中: <b id="currentNoteName">なし</b></span>
+            <div style="flex: 2 1 320px;">
+              <input id="searchInput" placeholder="検索（タイトル／本文）" />
             </div>
+            <button class="btn pri" id="btnNewMemo" style="flex: 0 0 auto;">＋ 新規</button>
           </div>
 
-          <div class="row" style="margin-top:10px">
-            <input id="searchInput" type="text" placeholder="メモ検索（タイトル/本文）" />
-            <button class="btn ghost" id="clearSearchBtn">クリア</button>
+          <div class="muted" id="listInfo">0件</div>
+          <div class="list" id="memoList"></div>
+
+          <div class="footerbar">
+            <button class="btn gray" id="btnExport">⬇ 退避（JSON）</button>
+            <label class="btn gray" style="cursor:pointer;">
+              ⬆ 取込（JSON）
+              <input id="importFile" type="file" accept="application/json" style="display:none;">
+            </label>
           </div>
 
-          <div class="list" id="noteList"></div>
-
-          <div class="hint" style="margin-top:10px">
-            ・メモ名は「タイトル」優先。空なら「本文の1行目」を表示。<br/>
-            ・並びは<b>更新日時（新しい順）</b>。探せない地獄を減らす。<br/>
+          <div class="muted" style="margin-top:10px;">
+            ※保存先：localStorage（この端末・このブラウザ内）。<br>
+            ※万一に備えてたまに「退避（JSON）」しておくと安全。
           </div>
-        </div>
-      </section>
-    </div>
-  </div>
-
-  <!-- Fullscreen Editor Overlay -->
-  <div class="overlay" id="overlay">
-    <div class="sheet">
-      <div class="sheetbar">
-        <div class="left">
-          <button class="btn ghost" id="backBtn">← 戻る</button>
-          <div>
-            <div class="name" id="editorFolderName"></div>
-            <div class="count">文字数: <span id="editorCharCount">0</span> / 更新: <span id="editorUpdatedAt">-</span></div>
-          </div>
-        </div>
-        <div class="right">
-          <button class="btn ok" id="saveBtn">💾 保存</button>
-          <button class="btn danger" id="deleteNoteBtn">🗑️ 削除</button>
         </div>
       </div>
-      <div class="sheetcontent">
-        <input id="editorTitle" type="text" placeholder="タイトル（任意）" />
-        <textarea id="editorBody" placeholder="本文…（整形しない。空白も改行もそのまま）"></textarea>
-        <div class="row" style="justify-content:space-between">
-          <span class="hint">※ 保存ボタン＋自動保存（入力停止後）</span>
-          <span class="smalllink" id="copyBtn">本文をコピー</span>
+    </section>
+
+    <!-- ② 管理画面 -->
+    <section id="screenManage" class="screen">
+      <div class="card">
+        <div class="card-h">
+          <h2>フォルダ管理</h2>
+          <button class="btn gray mini" id="btnBackFromManage">← 一覧へ</button>
+        </div>
+        <div class="card-b">
+          <div class="row" style="margin-bottom:10px;">
+            <input id="newFolderName" placeholder="新しいフォルダ名" />
+            <button class="btn pri" id="btnAddFolder" style="flex:0 0 auto;">＋ 追加</button>
+          </div>
+
+          <div class="row" style="margin-bottom:10px;">
+            <select id="manageFolderSelect"></select>
+            <input id="renameFolderInput" placeholder="選択中フォルダ名を変更" />
+          </div>
+
+          <div class="row">
+            <button class="btn ghost" id="btnRenameFolder">✏️ 名前変更</button>
+            <button class="btn danger" id="btnDeleteFolder">🗑️ フォルダ削除</button>
+          </div>
+
+          <div class="muted" style="margin-top:10px;">
+            ※削除は「そのフォルダ内のメモも全部」消える（確認あり）。
+          </div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="toast" id="toast"></div>
+    <!-- ③ 編集画面 -->
+    <section id="screenEdit" class="screen">
+      <div class="card">
+        <div class="card-h">
+          <h2 id="editHeader">編集</h2>
+          <button class="btn gray mini" id="btnBackFromEdit">← 一覧へ</button>
+        </div>
+        <div class="card-b editor-wrap">
+          <div class="editor-top">
+            <div class="left">
+              <span class="chip" id="editFolderChip">📁 メモ</span>
+              <span class="count">文字数：<span id="editCount">0</span></span>
+              <span class="muted" id="autosaveHint">自動保存：ON</span>
+            </div>
+            <div class="row" style="flex:1 1 auto; justify-content:flex-end;">
+              <button class="btn pri" id="btnSave">💾 保存</button>
+              <button class="btn danger" id="btnDeleteMemo">🗑 削除</button>
+            </div>
+          </div>
+
+          <input id="memoTitle" placeholder="タイトル（空なら本文冒頭がタイトル扱い）" />
+          <textarea id="memoBody" placeholder="ここにメモを書いてください…"></textarea>
+
+          <div class="muted">
+            ※改行・全角スペース含めてそのまま保持（勝手に整形しない）<br>
+            ※入力停止から600msで自動保存（保存ボタンでも保存可能）
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 
 <script>
 (() => {
-  const KEY = "kojimemo_v2_data";
+  const LS_KEY = "kojimemo_v3_data";
 
-  const el = (id) => document.getElementById(id);
-  const folderSelect = el("folderSelect");
-  const newFolderName = el("newFolderName");
-  const addFolderBtn = el("addFolderBtn");
-  const renameFolderInput = el("renameFolderInput");
-  const renameFolderBtn = el("renameFolderBtn");
-  const deleteFolderBtn = el("deleteFolderBtn");
-
-  const rightTitle = el("rightTitle");
-  const folderCount = el("folderCount");
-  const noteCount = el("noteCount");
-  const noteList = el("noteList");
-  const newNoteBtn = el("newNoteBtn");
-  const openEditorBtn = el("openEditorBtn");
-  const currentNoteName = el("currentNoteName");
-
-  const searchInput = el("searchInput");
-  const clearSearchBtn = el("clearSearchBtn");
-
-  const exportBtn = el("exportBtn");
-  const importFile = el("importFile");
-
-  const overlay = el("overlay");
-  const backBtn = el("backBtn");
-  const saveBtn = el("saveBtn");
-  const deleteNoteBtn = el("deleteNoteBtn");
-  const editorFolderName = el("editorFolderName");
-  const editorTitle = el("editorTitle");
-  const editorBody = el("editorBody");
-  const editorCharCount = el("editorCharCount");
-  const editorUpdatedAt = el("editorUpdatedAt");
-  const copyBtn = el("copyBtn");
-
-  const toast = el("toast");
-
-  const nowISO = () => new Date().toISOString();
-  const fmtTime = (iso) => {
-    if (!iso) return "-";
-    const d = new Date(iso);
-    const pad = (n)=>String(n).padStart(2,"0");
-    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
-
+  /** data schema:
+   * { folders: [{id,name}], memos: [{id, folderId, title, body, updatedAt}] , selectedFolderId }
+   */
   const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-  const defaultData = () => ({
-    v: 2,
-    folders: [
-      { id: uid(), name: "メモ", createdAt: nowISO() }
-    ],
-    notes: [
-      // { id, folderId, title, body, createdAt, updatedAt }
-    ],
-    state: { folderId: null, noteId: null }
-  });
+  const nowISO = () => new Date().toISOString();
 
-  const load = () => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return defaultData();
-      const data = JSON.parse(raw);
-      if (!data || !data.folders) return defaultData();
-      if (!data.state) data.state = { folderId: null, noteId: null };
-      if (!data.notes) data.notes = [];
-      if (!data.v) data.v = 2;
-      return data;
-    } catch {
-      return defaultData();
+  const $ = (id) => document.getElementById(id);
+
+  const screens = {
+    list: $("screenList"),
+    manage: $("screenManage"),
+    edit: $("screenEdit")
+  };
+
+  const pillFolder = $("pillFolder");
+  const pillCount = $("pillCount");
+
+  const folderSelect = $("folderSelect");
+  const manageFolderSelect = $("manageFolderSelect");
+  const searchInput = $("searchInput");
+  const memoList = $("memoList");
+  const listInfo = $("listInfo");
+
+  const newFolderName = $("newFolderName");
+  const btnAddFolder = $("btnAddFolder");
+  const renameFolderInput = $("renameFolderInput");
+  const btnRenameFolder = $("btnRenameFolder");
+  const btnDeleteFolder = $("btnDeleteFolder");
+
+  const btnGoManage = $("btnGoManage");
+  const btnBackFromManage = $("btnBackFromManage");
+
+  const btnNewMemo = $("btnNewMemo");
+  const btnBackFromEdit = $("btnBackFromEdit");
+  const btnSave = $("btnSave");
+  const btnDeleteMemo = $("btnDeleteMemo");
+
+  const editHeader = $("editHeader");
+  const editFolderChip = $("editFolderChip");
+  const memoTitle = $("memoTitle");
+  const memoBody = $("memoBody");
+  const editCount = $("editCount");
+
+  const btnExport = $("btnExport");
+  const importFile = $("importFile");
+
+  let state = load();
+  let currentMemoId = null;
+  let autosaveTimer = null;
+
+  function defaultState(){
+    const baseFolderId = uid();
+    return {
+      folders: [{ id: baseFolderId, name: "メモ" }],
+      memos: [],
+      selectedFolderId: baseFolderId
+    };
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      // 簡単な補正
+      if(!parsed.folders || !parsed.memos) return defaultState();
+      if(!parsed.selectedFolderId) parsed.selectedFolderId = parsed.folders[0]?.id;
+      return parsed;
+    }catch(e){
+      console.warn(e);
+      return defaultState();
     }
-  };
+  }
 
-  const save = () => localStorage.setItem(KEY, JSON.stringify(db));
+  function save(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
 
-  const toastMsg = (msg) => {
-    toast.textContent = msg;
-    toast.classList.add("show");
-    clearTimeout(toast._t);
-    toast._t = setTimeout(()=>toast.classList.remove("show"), 900);
-  };
+  function showScreen(which){
+    Object.values(screens).forEach(s => s.classList.remove("active"));
+    screens[which].classList.add("active");
+  }
 
-  let db = load();
+  function getFolderName(folderId){
+    return state.folders.find(f => f.id === folderId)?.name || "（不明）";
+  }
 
-  const ensureState = () => {
-    if (!db.folders.length) db.folders.push({ id: uid(), name: "メモ", createdAt: nowISO() });
-    if (!db.state.folderId || !db.folders.find(f=>f.id===db.state.folderId)) {
-      db.state.folderId = db.folders[0].id;
-    }
-    if (db.state.noteId && !db.notes.find(n=>n.id===db.state.noteId)) db.state.noteId = null;
-  };
-
-  const getFolder = (id) => db.folders.find(f=>f.id===id);
-  const getNote = (id) => db.notes.find(n=>n.id===id);
-
-  const noteDisplayName = (n) => {
-    const t = (n.title || "").trim();
-    if (t) return t;
-    const first = (n.body || "").split("\n")[0] || "";
-    return first.trim() ? first.trim().slice(0, 60) : "（無題）";
-  };
-
-  const countChars = (s) => {
-    // JSのlength。全角スペースも改行も含む（勝手に削らない）
-    return (s ?? "").length;
-  };
-
-  const filteredNotes = () => {
-    const fid = db.state.folderId;
-    const q = (searchInput.value || "").trim().toLowerCase();
-    let list = db.notes.filter(n=>n.folderId===fid);
-    if (q) {
-      list = list.filter(n=>{
-        const name = noteDisplayName(n).toLowerCase();
-        const body = (n.body||"").toLowerCase();
-        return name.includes(q) || body.includes(q);
-      });
-    }
-    // 更新が新しい順
-    list.sort((a,b)=>(b.updatedAt||b.createdAt).localeCompare(a.updatedAt||a.createdAt));
-    return list;
-  };
-
-  const renderFolders = () => {
-    folderSelect.innerHTML = "";
-    db.folders.forEach(f=>{
-      const opt = document.createElement("option");
-      opt.value = f.id;
-      opt.textContent = f.name;
-      if (f.id === db.state.folderId) opt.selected = true;
-      folderSelect.appendChild(opt);
-    });
-    folderCount.textContent = `${db.folders.length} 個`;
-    const f = getFolder(db.state.folderId);
-    rightTitle.textContent = f ? f.name : "メモ";
-    editorFolderName.textContent = f ? `📁 ${f.name}` : "📁 -";
-  };
-
-  const renderNotes = () => {
-    const list = filteredNotes();
-    noteCount.textContent = `${list.length} 件`;
-    noteList.innerHTML = "";
-    if (!list.length) {
-      const empty = document.createElement("div");
-      empty.className = "item";
-      empty.innerHTML = `<div>
-        <div class="titleline">メモがありません</div>
-        <div class="meta">「新規メモ」から作成できます</div>
-      </div>
-      <span class="badge muted">0</span>`;
-      empty.style.cursor = "default";
-      noteList.appendChild(empty);
-    } else {
-      list.forEach(n=>{
-        const div = document.createElement("div");
-        div.className = "item" + (n.id === db.state.noteId ? " active" : "");
-        const name = noteDisplayName(n);
-        const chars = countChars(n.body||"");
-        div.innerHTML = `
-          <div style="min-width:0">
-            <div class="titleline">${escapeHtml(name)}</div>
-            <div class="meta">更新: ${fmtTime(n.updatedAt||n.createdAt)}</div>
-          </div>
-          <span class="badge">${chars}</span>
-        `;
-        div.onclick = () => {
-          db.state.noteId = n.id;
-          save();
-          renderAll();
-        };
-        noteList.appendChild(div);
-      });
-    }
-
-    const cur = db.state.noteId ? getNote(db.state.noteId) : null;
-    currentNoteName.textContent = cur ? noteDisplayName(cur) : "なし";
-    openEditorBtn.disabled = !cur;
-  };
-
-  const renderAll = () => {
-    ensureState();
-    renderFolders();
-    renderNotes();
-  };
-
-  const addFolder = () => {
-    const name = (newFolderName.value || "").trim();
-    if (!name) return toastMsg("フォルダ名が空");
-    const f = { id: uid(), name, createdAt: nowISO() };
-    db.folders.push(f);
-    db.state.folderId = f.id;
-    db.state.noteId = null;
-    newFolderName.value = "";
+  function setSelectedFolder(folderId){
+    state.selectedFolderId = folderId;
     save();
-    renderAll();
-    toastMsg("フォルダ追加");
-  };
+    syncFolderUI();
+    renderList();
+  }
 
-  const renameFolder = () => {
+  function syncFolderUI(){
+    // selects
+    folderSelect.innerHTML = "";
+    manageFolderSelect.innerHTML = "";
+
+    state.folders.forEach(f => {
+      const opt1 = document.createElement("option");
+      opt1.value = f.id;
+      opt1.textContent = f.name;
+      folderSelect.appendChild(opt1);
+
+      const opt2 = document.createElement("option");
+      opt2.value = f.id;
+      opt2.textContent = f.name;
+      manageFolderSelect.appendChild(opt2);
+    });
+
+    folderSelect.value = state.selectedFolderId;
+    manageFolderSelect.value = state.selectedFolderId;
+
+    pillFolder.textContent = getFolderName(state.selectedFolderId);
+  }
+
+  function countChars(str){
+    // ここは「表示されている文字数」優先：改行も数える（\n も1文字扱い）
+    // JSのlengthでOK
+    return (str ?? "").length;
+  }
+
+  function memoPreview(m){
+    const title = (m.title && m.title.trim()) ? m.title.trim() : (m.body || "").trim().split("\n")[0].slice(0, 40);
+    const body = (m.body || "").trim();
+    const prev = body.length ? body.slice(0, 200) : "（本文なし）";
+    return { title: title || "（無題）", preview: prev };
+  }
+
+  function renderList(){
+    const folderId = state.selectedFolderId;
+    const q = (searchInput.value || "").trim().toLowerCase();
+
+    const filtered = state.memos
+      .filter(m => m.folderId === folderId)
+      .filter(m => {
+        if(!q) return true;
+        return (m.title || "").toLowerCase().includes(q) || (m.body || "").toLowerCase().includes(q);
+      })
+      .sort((a,b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+
+    memoList.innerHTML = "";
+
+    listInfo.textContent = `${filtered.length}件`;
+
+    filtered.forEach(m => {
+      const { title, preview } = memoPreview(m);
+
+      const wrap = document.createElement("div");
+      wrap.className = "item";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const t = document.createElement("p");
+      t.className = "t";
+      t.textContent = title;
+
+      const p = document.createElement("p");
+      p.className = "p";
+      p.textContent = preview;
+
+      meta.appendChild(t);
+      meta.appendChild(p);
+
+      const right = document.createElement("div");
+      right.className = "right";
+
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.textContent = `字数 ${countChars(m.body)}`;
+
+      const btnOpen = document.createElement("button");
+      btnOpen.className = "btn pri mini";
+      btnOpen.textContent = "開く";
+      btnOpen.addEventListener("click", () => openMemo(m.id));
+
+      right.appendChild(chip);
+      right.appendChild(btnOpen);
+
+      wrap.appendChild(meta);
+      wrap.appendChild(right);
+
+      memoList.appendChild(wrap);
+    });
+
+    // pill count = フォルダ内合計じゃなく「今見えてる件数」ではなく、
+    // ユーザーのストレス軽減的に「選択中メモの文字数」を出す。
+    // 選択中がないときは0
+    pillCount.textContent = (currentMemoId ? (countChars(getMemo(currentMemoId)?.body) || 0) : 0);
+  }
+
+  function getMemo(id){
+    return state.memos.find(m => m.id === id);
+  }
+
+  function openMemo(id){
+    const m = getMemo(id);
+    if(!m) return;
+
+    currentMemoId = id;
+
+    editHeader.textContent = "編集";
+    editFolderChip.textContent = `📁 ${getFolderName(m.folderId)}`;
+
+    memoTitle.value = m.title || "";
+    memoBody.value = m.body || "";
+
+    updateCounts();
+
+    showScreen("edit");
+    // カーソルすぐ打てるように
+    setTimeout(() => memoBody.focus(), 50);
+  }
+
+  function newMemo(){
+    const folderId = state.selectedFolderId;
+    const m = {
+      id: uid(),
+      folderId,
+      title: "",
+      body: "",
+      updatedAt: nowISO()
+    };
+    state.memos.push(m);
+    save();
+    renderList();
+    openMemo(m.id);
+  }
+
+  function updateCounts(){
+    const c = countChars(memoBody.value);
+    editCount.textContent = c;
+    pillCount.textContent = c;
+    pillFolder.textContent = getFolderName(state.selectedFolderId);
+  }
+
+  function commitMemo(){
+    if(!currentMemoId) return;
+    const m = getMemo(currentMemoId);
+    if(!m) return;
+
+    m.title = memoTitle.value ?? "";
+    m.body = memoBody.value ?? "";
+    m.updatedAt = nowISO();
+
+    save();
+    updateCounts();
+  }
+
+  function scheduleAutosave(){
+    if(autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+      commitMemo();
+      renderList(); // 反映（プレビューや更新順）
+    }, 600);
+  }
+
+  function backToList(){
+    // 編集中の内容は保存してから戻る
+    commitMemo();
+    save();
+    showScreen("list");
+    renderList();
+  }
+
+  function addFolder(){
+    const name = (newFolderName.value || "").trim();
+    if(!name) return alert("フォルダ名を入れて。");
+    // 同名でもOK（ユーザーの自由）
+    const f = { id: uid(), name };
+    state.folders.push(f);
+    newFolderName.value = "";
+    state.selectedFolderId = f.id;
+    save();
+    syncFolderUI();
+    renderList();
+    alert(`フォルダ「${name}」を追加した。`);
+  }
+
+  function renameFolder(){
+    const folderId = manageFolderSelect.value;
     const name = (renameFolderInput.value || "").trim();
-    if (!name) return toastMsg("新しい名前が空");
-    const f = getFolder(db.state.folderId);
-    if (!f) return;
+    if(!name) return alert("新しい名前を入れて。");
+    const f = state.folders.find(x => x.id === folderId);
+    if(!f) return;
     f.name = name;
     renameFolderInput.value = "";
     save();
-    renderAll();
-    toastMsg("名前変更");
-  };
+    syncFolderUI();
+    renderList();
+    alert("名前を変更した。");
+  }
 
-  const deleteFolder = () => {
-    const f = getFolder(db.state.folderId);
-    if (!f) return;
-    if (db.folders.length === 1) return toastMsg("最後のフォルダは削除できない");
-    if (!confirm(`フォルダ「${f.name}」を削除します。\n中のメモも全削除です。OK？`)) return;
+  function deleteFolder(){
+    const folderId = manageFolderSelect.value;
+    const f = state.folders.find(x => x.id === folderId);
+    if(!f) return;
 
-    const fid = f.id;
-    db.folders = db.folders.filter(x=>x.id!==fid);
-    db.notes = db.notes.filter(n=>n.folderId!==fid);
-    db.state.folderId = db.folders[0].id;
-    db.state.noteId = null;
+    if(state.folders.length <= 1){
+      return alert("最後のフォルダは削除できない。");
+    }
+
+    const count = state.memos.filter(m => m.folderId === folderId).length;
+    const ok = confirm(`フォルダ「${f.name}」を削除する？\n中のメモ ${count} 件も全部消える。`);
+    if(!ok) return;
+
+    // remove memos
+    state.memos = state.memos.filter(m => m.folderId !== folderId);
+    // remove folder
+    state.folders = state.folders.filter(x => x.id !== folderId);
+
+    // fix selection
+    if(state.selectedFolderId === folderId){
+      state.selectedFolderId = state.folders[0].id;
+    }
+    if(currentMemoId && getMemo(currentMemoId)?.folderId === folderId){
+      currentMemoId = null;
+    }
+
     save();
-    renderAll();
-    toastMsg("フォルダ削除");
-  };
+    syncFolderUI();
+    renderList();
+    alert("削除した。");
+  }
 
-  const newNote = () => {
-    const n = {
-      id: uid(),
-      folderId: db.state.folderId,
-      title: "",
-      body: "",
-      createdAt: nowISO(),
-      updatedAt: nowISO()
-    };
-    db.notes.push(n);
-    db.state.noteId = n.id;
-    save();
-    renderAll();
-    openEditor();
-    toastMsg("新規メモ");
-  };
-
-  let autosaveTimer = null;
-  const scheduleAutoSave = () => {
-    clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(()=> {
-      if (!overlay.classList.contains("show")) return;
-      doSave(false);
-    }, 600);
-  };
-
-  const openEditor = () => {
-    const n = getNote(db.state.noteId);
-    if (!n) return;
-    overlay.classList.add("show");
-    editorTitle.value = n.title || "";
-    editorBody.value = n.body || "";
-    editorCharCount.textContent = countChars(editorBody.value);
-    editorUpdatedAt.textContent = fmtTime(n.updatedAt || n.createdAt);
-    editorFolderName.textContent = `📁 ${getFolder(n.folderId)?.name ?? "-"}`;
-    // focus body for “アプリっぽい”
-    setTimeout(()=>editorBody.focus(), 50);
-  };
-
-  const closeEditor = () => {
-    overlay.classList.remove("show");
-  };
-
-  const doSave = (showToast=true) => {
-    const n = getNote(db.state.noteId);
-    if (!n) return;
-    n.title = editorTitle.value ?? "";
-    n.body = editorBody.value ?? "";
-    n.updatedAt = nowISO();
-    save();
-    editorUpdatedAt.textContent = fmtTime(n.updatedAt);
-    renderNotes();
-    if (showToast) toastMsg("保存");
-  };
-
-  const deleteNote = () => {
-    const n = getNote(db.state.noteId);
-    if (!n) return;
-    if (!confirm(`メモ「${noteDisplayName(n)}」を削除します。OK？`)) return;
-    db.notes = db.notes.filter(x=>x.id!==n.id);
-    db.state.noteId = null;
-    save();
-    closeEditor();
-    renderAll();
-    toastMsg("削除");
-  };
-
-  const escapeHtml = (s) => (s ?? "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
-
-  const exportData = () => {
-    const blob = new Blob([JSON.stringify(db, null, 2)], {type:"application/json"});
+  function exportJSON(){
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `kojimemo_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = "kojimemo_backup.json";
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
-    toastMsg("退避ファイル作成");
-  };
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  }
 
-  const importData = async (file) => {
-    try{
-      const text = await file.text();
-      const incoming = JSON.parse(text);
-      if (!incoming || !incoming.folders || !incoming.notes) throw new Error("invalid");
-      // ざっくり上書き（この端末の倉庫として使う想定）
-      db = incoming;
-      if (!db.state) db.state = { folderId:null, noteId:null };
-      save();
-      renderAll();
-      toastMsg("取込OK");
-    }catch{
-      toastMsg("取込失敗");
-    }
-  };
+  function importJSONFile(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        if(!parsed || !parsed.folders || !parsed.memos){
+          return alert("形式が違うっぽい。");
+        }
+        state = parsed;
+        if(!state.selectedFolderId && state.folders[0]) state.selectedFolderId = state.folders[0].id;
+        currentMemoId = null;
+        save();
+        syncFolderUI();
+        renderList();
+        alert("取込完了。");
+      }catch(e){
+        console.error(e);
+        alert("JSONの読み込みで失敗した。");
+      }
+    };
+    reader.readAsText(file);
+  }
 
-  const copyBody = async () => {
-    try{
-      await navigator.clipboard.writeText(editorBody.value || "");
-      toastMsg("コピーした");
-    }catch{
-      toastMsg("コピー失敗");
-    }
-  };
+  function deleteCurrentMemo(){
+    if(!currentMemoId) return;
+    const m = getMemo(currentMemoId);
+    if(!m) return;
+    const { title } = memoPreview(m);
+    if(!confirm(`メモ「${title}」を削除する？`)) return;
 
-  // Events
-  addFolderBtn.onclick = addFolder;
-  folderSelect.onchange = () => {
-    db.state.folderId = folderSelect.value;
-    db.state.noteId = null;
+    state.memos = state.memos.filter(x => x.id !== currentMemoId);
+    currentMemoId = null;
     save();
-    renderAll();
-  };
-  renameFolderBtn.onclick = renameFolder;
-  deleteFolderBtn.onclick = deleteFolder;
+    showScreen("list");
+    renderList();
+  }
 
-  newNoteBtn.onclick = newNote;
-  openEditorBtn.onclick = openEditor;
-
-  backBtn.onclick = () => {
-    // 戻る前に静かに保存
-    if (overlay.classList.contains("show")) doSave(false);
-    closeEditor();
-  };
-  saveBtn.onclick = () => doSave(true);
-  deleteNoteBtn.onclick = deleteNote;
-
-  editorTitle.addEventListener("input", () => scheduleAutoSave());
-  editorBody.addEventListener("input", () => {
-    editorCharCount.textContent = countChars(editorBody.value);
-    scheduleAutoSave();
+  // events
+  folderSelect.addEventListener("change", () => setSelectedFolder(folderSelect.value));
+  manageFolderSelect.addEventListener("change", () => {
+    // 管理画面側の選択変更で現在選択フォルダも同期
+    setSelectedFolder(manageFolderSelect.value);
   });
 
-  overlay.addEventListener("click", (e)=>{
-    // 背景クリックで閉じない（誤爆防止）
-    // 何もしない
+  searchInput.addEventListener("input", renderList);
+
+  btnNewMemo.addEventListener("click", newMemo);
+
+  btnGoManage.addEventListener("click", () => {
+    showScreen("manage");
+    syncFolderUI();
   });
 
-  searchInput.addEventListener("input", renderNotes);
-  clearSearchBtn.onclick = () => { searchInput.value=""; renderNotes(); };
+  btnBackFromManage.addEventListener("click", () => {
+    showScreen("list");
+    renderList();
+  });
 
-  exportBtn.onclick = exportData;
-  importFile.onchange = (e) => {
+  btnAddFolder.addEventListener("click", addFolder);
+  btnRenameFolder.addEventListener("click", renameFolder);
+  btnDeleteFolder.addEventListener("click", deleteFolder);
+
+  btnBackFromEdit.addEventListener("click", backToList);
+  btnSave.addEventListener("click", () => { commitMemo(); save(); renderList(); alert("保存した。"); });
+  btnDeleteMemo.addEventListener("click", deleteCurrentMemo);
+
+  memoTitle.addEventListener("input", () => { updateCounts(); scheduleAutosave(); });
+  memoBody.addEventListener("input", () => { updateCounts(); scheduleAutosave(); });
+
+  btnExport.addEventListener("click", exportJSON);
+  importFile.addEventListener("change", (e) => {
     const f = e.target.files?.[0];
-    if (f) importData(f);
+    if(f) importJSONFile(f);
     importFile.value = "";
-  };
+  });
 
-  copyBtn.onclick = copyBody;
-
-  // 初期化
-  ensureState();
-  save();
-  renderAll();
+  // init
+  syncFolderUI();
+  renderList();
 })();
 </script>
 </body>
