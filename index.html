@@ -74,6 +74,37 @@
 </div>
 
 <script>
+  // ===== ブラウザバック対策：戻るを「アプリ内戻る」にする =====
+(function preventBackLeave() {
+  // 1回ダミーの履歴を積む（これで最初の「戻る」をアプリ側で捕まえられる）
+  history.pushState({ memoApp: true }, "", location.href);
+
+  window.addEventListener("popstate", (e) => {
+    // ここに来た＝戻るが押された
+    // もう一度ダミー履歴を積んで、ブラウザが本当に戻らないようにする
+    history.pushState({ memoApp: true }, "", location.href);
+
+    // ここから「アプリ内の戻る」を実行
+    try {
+      // もし全画面編集が開いてるなら閉じる（関数名はあなたのコードに合わせて調整）
+      if (typeof closeEditor === "function") closeEditor();
+
+      // それ以外は1階層上へ（関数があれば呼ぶ）
+      else if (typeof goUp === "function") goUp();
+
+      // どっちも無ければ、最低限は何もしない（離脱だけ防ぐ）
+    } catch (_) {}
+  });
+
+  // 戻る/進むの復元（bfcache）で描画が崩れる端末があるので、念のため再描画
+  window.addEventListener("pageshow", (ev) => {
+    if (ev.persisted) {
+      try {
+        if (typeof render === "function") render();
+      } catch (_) {}
+    }
+  });
+})();
 /**
  * データ構造（無限階層）
  * root = { folders: {name: node}, memos: {id: {title, text, updatedAt}} }
