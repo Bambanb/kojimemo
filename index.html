@@ -185,7 +185,7 @@ const KEY = "memoTreeV1";
 
 function newNode(){ return { folders:{}, memos:{} }; }
 let root = load() || newNode();
-let path = []; // ["皇颯","短編",...]
+ver path = []; // ["皇颯","短編",...]
 let selected = null; // {type:"folder", name} or {type:"memo", id}
 let editingMemoId = null;
 let autosaveTimer = null;
