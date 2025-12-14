@@ -104,19 +104,6 @@ function setHashForMemo(id) {
   location.hash = "m=" + enc(String(id));
 }
 
-// ハッシュ → 状態反映（ここはあなたの既存関数に合わせて中身を呼ぶ）
-function applyHash() {
-  const h = (location.hash || "#home").replace(/^#/, "");
-  if (!h || h === "home") {
-    // 一覧に戻す
-    if (typeof closeEditor === "function") closeEditor();
-    // ルートに戻す（path配列で管理してる前提）
-    if (typeof path !== "undefined") path = [];
-    if (typeof selected !== "undefined") selected = null;
-    if (typeof render === "function") render();
-    return;
-  }
-
   if (h.startsWith("f=")) {
     const p = dec(h.slice(2));
     const arr = p ? p.split("/").map(dec) : [];
@@ -194,6 +181,20 @@ ver selected = null; // {type:"folder", name} or {type:"memo", id}
 ver editingMemoId = null;
 ver autosaveTimer = null;
 
+// ハッシュ → 状態反映（ここはあなたの既存関数に合わせて中身を呼ぶ）
+function applyHash() {
+  const h = (location.hash || "#home").replace(/^#/, "");
+  if (!h || h === "home") {
+    // 一覧に戻す
+    if (typeof closeEditor === "function") closeEditor();
+    // ルートに戻す（path配列で管理してる前提）
+    if (typeof path !== "undefined") path = [];
+    if (typeof selected !== "undefined") selected = null;
+    if (typeof render === "function") render();
+    return;
+  }
+
+  
 function load(){
   try { return JSON.parse(localStorage.getItem(KEY)); } catch(e){ return null; }
 }
