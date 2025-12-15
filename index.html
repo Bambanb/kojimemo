@@ -238,6 +238,29 @@
 
 <script>
 
+  document.documentElement.insertAdjacentHTML(
+  "afterbegin",
+  `<div style="position:fixed;left:8px;top:8px;z-index:99999;
+              padding:6px 10px;border-radius:10px;
+              background:#ff0;color:#000;font-weight:800;">
+     JS OK
+   </div>`
+);
+window.onerror = function (msg, src, line, col) {
+  document.body.insertAdjacentHTML(
+    "afterbegin",
+    `<pre style="position:fixed;left:8px;top:44px;z-index:99999;
+                max-width:92vw;white-space:pre-wrap;
+                padding:10px;border-radius:10px;
+                background:#f33;color:#fff;">
+JS ERROR:
+${msg}
+${line}:${col}
+${src}
+</pre>`
+  );
+};
+
   window.onerror = function (msg, src, line, col, err) {
   alert(`JSエラー:\n${msg}\n${line}:${col}\n${src}`);
 };
