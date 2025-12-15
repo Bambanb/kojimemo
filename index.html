@@ -176,7 +176,7 @@
       <div class="row" style="min-width:0">
         <button class="btn icon" id="backBtn" title="上へ">←</button>
         <div style="min-width:0">
-          <div class="title" id="headTitle">ホーム</div>
+          <div class="title" id="headTitle" data-i18n="ホーム">ホーム</div>
           <div class="crumb" id="breadcrumb">/</div>
         </div>
       </div>
@@ -188,11 +188,18 @@
     <div class="spacer"></div>
 
     <div class="row">
+
+<div class="row">
+  <button class="btn icon" id="searchBtn" title="検索">🔎</button>
+  <button class="btn icon" id="modeBtn" title="モード切替">待</button>
+</div>
+      
       <div class="pill">
         <span class="ico">✎</span>
-        <input id="qInput" placeholder="タイトル/本文の一部（任意）" />
+        <input id="qInput" data-ph="タイトル/本文の一部（任意）" placeholder="タイトル/本文の一部（任意）" />
       </div>
-      <button class="btn" id="renameFolderBtn">フォルダ名変更</button>
+      <button class="btn" id="renameFolderBtn" data-i18n="フォルダ名変更">フォルダ名変更</button>
+<button class="btn danger" id="deleteFolderBtn" data-i18n="フォルダ削除">フォルダ削除</button>
       <button class="btn danger" id="deleteFolderBtn">フォルダ削除</button>
     </div>
   </header>
@@ -201,8 +208,16 @@
     <div class="panel" id="foldersPanel">
       <h3>フォルダ</h3>
       <div id="foldersList"></div>
-      <div class="hint" id="foldersEmpty" style="display:none;">フォルダなし</div>
-    </div>
+
+<h3 data-i18n="フォルダ">フォルダ</h3>
+...
+<div class="hint" id="foldersEmpty" style="display:none;" data-i18n="フォルダなし">フォルダなし</div>
+
+<h3 data-i18n="メモ">メモ</h3>
+...
+<div class="hint" id="memosEmpty" style="display:none;" data-i18n="メモなし">メモなし</div>
+      
+        </div>
 
     <div class="panel" id="memosPanel">
       <h3>メモ</h3>
@@ -212,8 +227,9 @@
   </main>
 
   <div class="fab">
-    <button class="btn accent" id="addMemoBtn">＋メモ</button>
-    <button class="btn accent" id="addFolderBtn">＋📁</button>
+    <button class="btn accent" id="addMemoBtn" data-i18n="＋メモ">＋メモ</button>
+<button class="btn accent" id="addFolderBtn" data-i18n="＋📁">＋📁</button>
+    
   </div>
 
   <!-- editor -->
@@ -221,12 +237,13 @@
     <div id="editorTop">
       <div class="row between">
         <button class="btn" id="closeEditorBtn">←</button>
-        <div class="small" id="charCount">文字数 0</div>
-        <button class="btn accent" id="saveBtn">保存</button>
-      </div>
-      <input id="titleInput" placeholder="タイトル" />
-    </div>
-    <textarea id="bodyInput" placeholder="ここに本文を書く。"></textarea>
+
+<div class="small" id="charCount" data-i18n="文字数">文字数 0</div>
+<button class="btn accent" id="saveBtn" data-i18n="保存">保存</button>
+
+<input id="titleInput" data-ph="タイトル" placeholder="タイトル" />
+<textarea id="bodyInput" data-ph="ここに本文を書く。" placeholder="ここに本文を書く。"></textarea>
+        
   </div>
 
 <script>
@@ -323,6 +340,7 @@ function render(){
         <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
       </div>
       <div class="meta">
+      <span>${t("文字数")} ${charSum}</span>
         <span>📝 ${memoCount}</span>
         <span>文字 ${charSum}</span>
         <span class="arrow">›</span>
@@ -365,7 +383,7 @@ function render(){
           </div>
         </div>
         <div class="meta">
-          <span>${(m.text||"").length}字</span>
+        <span>${(m.text||"").length}${t("字")}</span>
           <span class="arrow">›</span>
         </div>
       `;
@@ -398,8 +416,9 @@ function goUp(){
   if(path.length>0){ path.pop(); render(); }
 }
 function addFolder(){
-  const name = prompt("フォルダ名");
-  if(!name) return;
+  const name = prompt(t("フォルダ名"));
+...
+if(node.folders[name]){ alert(t("同名フォルダがあります")); return; }
   const node = getNode();
   if(node.folders[name]){ alert("同名フォルダがあります"); return; }
   node.folders[name] = newNode();
@@ -414,12 +433,11 @@ function addMemo(){
   openEditor(id);
 }
 function renameCurrentFolder(){
-  if(path.length===0){ alert("ホームは変更できません"); return; }
-  const old = path[path.length-1];
-  const parent = getNode(path.slice(0,-1));
-  const nu = prompt("新しいフォルダ名", old);
-  if(!nu || nu===old) return;
-  if(parent.folders[nu]){ alert("同名フォルダがあります"); return; }
+  if(path.length===0){ alert(t("ホームは変更できません")); return; }
+...
+const nu = prompt(t("新しいフォルダ名"), old);
+...
+if(parent.folders[nu]){ alert(t("同名フォルダがあります")); return; }
   parent.folders[nu] = parent.folders[old];
   delete parent.folders[old];
   path[path.length-1] = nu;
@@ -427,10 +445,9 @@ function renameCurrentFolder(){
   render();
 }
 function deleteCurrentFolder(){
-  if(path.length===0){ alert("ホームは削除できません"); return; }
-  const name = path[path.length-1];
-  const parent = getNode(path.slice(0,-1));
-  const ok = confirm(`「${name}」を削除しますか？（中身も消えます）`);
+if(path.length===0){ alert(t("ホームは削除できません")); return; }
+...
+const ok = confirm(`${t("削除しますか？")}「${name}」`);
   if(!ok) return;
   delete parent.folders[name];
   path.pop();
@@ -443,8 +460,8 @@ function openEditor(id){
   editingId = id;
   const node = getNode();
   const m = node.memos[id];
-  if(!m){ alert("メモが見つかりません"); return; }
-
+if(!m){ alert(t("メモが見つかりません")); return; }
+  
   el("titleInput").value = m.title || "";
   el("bodyInput").value = m.text || "";
   updateCharCount();
@@ -478,7 +495,7 @@ function saveMemo(silent=false){
   m.text  = el("bodyInput").value || "";
   m.updatedAt = now();
 
-  persist();
+  alert(t("保存に失敗しました"));
   if(!silent) render();
 }
 
@@ -495,7 +512,113 @@ el("qInput").addEventListener("input", ()=>render());
 el("bodyInput").addEventListener("input", updateCharCount);
 el("titleInput").addEventListener("input", ()=>{ /* optional */ });
 
+  
+function renderModeBtn(){
+  const b = el("modeBtn");
+  if(!b) return;
+  b.textContent = koukiMode ? "解" : "待";
+}
+
+function toggleMode(){
+  koukiMode = !koukiMode;
+  localStorage.setItem(MODE_KEY, koukiMode ? "1" : "0");
+  applyDict();
+  renderModeBtn();
+  render(); // 一覧の「文字」「字」等、JS描画にも影響させるなら再描画
+}
+
+if(el("modeBtn")) el("modeBtn").addEventListener("click", toggleMode);
+renderModeBtn();
+applyDict();
+  
 render();
+
+  /** ========= モード & 辞書 ========= */
+const MODE_KEY = "memoTree_mode_kouki";
+let koukiMode = localStorage.getItem(MODE_KEY) === "1";
+  DICT_KOUKI["字"] = "g"; // ←ここは好みで。「字」→「g」だと軽くて好き
+// もしくは
+DICT_KOUKI["字"] = "重量";
+const DICT_NORMAL = {
+  // ここは必要なら入れる（通常時の表記を変えたい場合のみ）
+};
+
+const DICT_KOUKI = {
+  // ① 共通UI
+  "ホーム":"ホーム",
+  "保存":"処理完了",
+  "戻る":"一旦引く",
+  "閉じる":"撤収",
+  "検索":"索敵",
+  "フォルダ名変更":"獲物名変更",
+  "フォルダ削除":"屠る",
+  "フォルダ":"獲物",
+  "メモ":"肉",
+  "フォルダなし":"仕入れ前",
+  "メモなし":"腹が減った",
+  "＋メモ":"＋解体",
+  "＋📁":"＋仕留める",
+
+  // editor
+  "文字数":"重量",
+  "タイトル":"味付け",
+  "ここに本文を書く。":"解体ショーの始まりだ",
+
+  // 検索補助
+  "タイトル/本文の一部（任意）":"索敵（任意）",
+
+  // 追加で必要になりがちなやつ
+  "(無題)":"(無題)",
+
+  // B リネーム
+  "名前を変更":"風味の調整",
+  "名前を変更しました":"味を調整した",
+
+  // C 競合/上書き
+  "上書きしました":"仕込み完了だ",
+  "変更が競合しています":"オーダーが被った",
+
+  // D 自動保存ステータス（必要なら表示する時用）
+  "自動保存中":"解体の邪魔をするな",
+  "自動保存完了":"寝かせて馴染ませる",
+
+  // ⑤ ダイアログ類（あなたの毒辞書は後でここに足してOK）
+  "同名フォルダがあります":"同じ獲物は要らねえ",
+  "ホームは変更できません":"ここは動かせねえ",
+  "ホームは削除できません":"ここは屠れねえ",
+  "メモが見つかりません":"毒の痕跡がない"
+};
+
+function dict(){
+  return koukiMode ? DICT_KOUKI : DICT_NORMAL;
+}
+function t(s){
+  const d = dict();
+  return d[s] ?? s;
+}
+
+// data-i18n と data-ph（placeholder） を一括反映
+function applyDict(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const key = el.getAttribute("data-i18n");
+    el.textContent = t(key);
+  });
+  document.querySelectorAll("[data-ph]").forEach(el=>{
+    const key = el.getAttribute("data-ph");
+    el.setAttribute("placeholder", t(key));
+  });
+  // タイトルや tooltip も必要ならここで
+}
+
+function render(){
+  ...
+  if(CONFIG.showMemosOnTop){
+    ...
+  }
+  applyDict();
+}
+
+  
 </script>
 </body>
 </html>
