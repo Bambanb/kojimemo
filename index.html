@@ -237,6 +237,12 @@
   </div>
 
 <script>
+
+  window.onerror = function (msg, src, line, col, err) {
+  alert(`JSエラー:\n${msg}\n${line}:${col}\n${src}`);
+};
+alert("JS 起動OK");
+  
 /** ========= 設定 ========= */
 const CONFIG = {
   showMemosOnTop: true,   // ←「メモ一覧いらん」なら false にする（フォルダだけ表示）
