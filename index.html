@@ -237,20 +237,6 @@
   </div>
 
 <script>
-
-  // 公開するたびにここだけ数字を変える（例: 20251215_01）
-  const APP_VERSION = "20251215_01";
-
-  const url = new URL(location.href);
-  const v = url.searchParams.get("v");
-
-  if (v !== APP_VERSION) {
-    url.searchParams.set("v", APP_VERSION);
-    // 履歴を汚さないで差し替え→読み直し
-    location.replace(url.toString());
-  }
-</script>
-<script>
   document.documentElement.insertAdjacentHTML(
   "afterbegin",
   `<div style="position:fixed;left:8px;top:8px;z-index:99999;
