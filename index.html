@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>メモ</title>
+  <title>繝｡繝｢</title>
   <style>
     :root{
       --bg:#202124;
@@ -18,7 +18,7 @@
     }
     *{box-sizing:border-box}
 
-    /* 更新テスト */
+    /* 譖ｴ譁ｰ繝�せ繝� */
     
     body{
       margin:0;
@@ -171,15 +171,49 @@
     }
     .spacer{height:8px}
     .hint{color:var(--muted); font-size:12px}
+    /* custom dialog */
+    #customDialog{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.7);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:100;
+    }
+    #dialogBox{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:20px;
+      max-width:90vw;
+      width:340px;
+    }
+    #dialogTitle{
+      font-size:16px;
+      font-weight:700;
+      margin-bottom:12px;
+      color:var(--text);
+    }
+    #dialogMessage{
+      font-size:14px;
+      color:var(--muted);
+      margin-bottom:20px;
+      line-height:1.5;
+    }
+    #dialogButtons{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="row between">
       <div class="row" style="min-width:0">
-        <button class="btn icon" id="backBtn" title="上へ">←</button>
+        <button class="btn icon" id="backBtn" title="荳翫∈">竊�</button>
         <div style="min-width:0">
-          <div class="title" id="headTitle" data-i18n="ホーム">ホーム</div>
+          <div class="title" id="headTitle" data-i18n="繝帙�繝�">繝帙�繝�</div>
           <div class="crumb" id="breadcrumb">/</div>
         </div>
       </div>
@@ -190,36 +224,34 @@
     <div class="row">
 
 <div class="row">
-  <button class="btn icon" id="searchBtn" title="検索">🔎</button>
-  <button class="btn icon" id="modeBtn" title="モード切替">待</button>
+  <button class="btn icon" id="modeBtn" title="繝｢繝ｼ繝牙�譖ｿ">蠕�</button>
 </div>
       
       <div class="pill">
-        <span class="ico">✎</span>
-        <input id="qInput" data-ph="タイトル/本文の一部（任意）" placeholder="タイトル/本文の一部（任意）" />
+        <span class="ico">笨�</span>
+        <input id="qInput" data-ph="繧ｿ繧､繝医Ν/譛ｬ譁��荳驛ｨ�井ｻｻ諢擾ｼ�" placeholder="繧ｿ繧､繝医Ν/譛ｬ譁��荳驛ｨ�井ｻｻ諢擾ｼ�" />
       </div>
-      <button class="btn" id="renameFolderBtn" data-i18n="フォルダ名変更">フォルダ名変更</button>
-<button class="btn danger" id="deleteFolderBtn" data-i18n="フォルダ削除">フォルダ削除</button>
+      <button class="btn" id="renameFolderBtn" data-i18n="繝輔か繝ｫ繝蜷榊､画峩">繝輔か繝ｫ繝蜷榊､画峩</button>
     </div>
   </header>
 
 <main>
   <div class="panel" id="foldersPanel">
-    <h3>フォルダ</h3>
+    <h3 data-i18n="繝輔か繝ｫ繝">繝輔か繝ｫ繝</h3>
     <div id="foldersList"></div>
-    <div class="hint" id="foldersEmpty" style="display:none;">フォルダなし</div>
+    <div class="hint" id="foldersEmpty" style="display:none;" data-i18n="繝輔か繝ｫ繝縺ｪ縺�">繝輔か繝ｫ繝縺ｪ縺�</div>
   </div>
 
   <div class="panel" id="memosPanel">
-    <h3>メモ</h3>
+    <h3 data-i18n="繝｡繝｢">繝｡繝｢</h3>
     <div id="memosList"></div>
-    <div class="hint" id="memosEmpty" style="display:none;">メモなし</div>
+    <div class="hint" id="memosEmpty" style="display:none;" data-i18n="繝｡繝｢縺ｪ縺�">繝｡繝｢縺ｪ縺�</div>
   </div>
 </main>
 
   <div class="fab">
-    <button class="btn accent" id="addMemoBtn" data-i18n="＋メモ">＋メモ</button>
-<button class="btn accent" id="addFolderBtn" data-i18n="＋📁">＋📁</button>
+    <button class="btn accent" id="addMemoBtn" data-i18n="�九Γ繝｢">�九Γ繝｢</button>
+<button class="btn accent" id="addFolderBtn" data-i18n="�愚沒�">�愚沒�</button>
     
   </div>
 
@@ -227,47 +259,36 @@
   <div id="editorView">
     <div id="editorTop">
       <div class="row between">
-        <button class="btn" id="closeEditorBtn">←</button>
-        <div class="small" id="charCount" data-i18n="文字数">文字数 0</div>
-        <button class="btn accent" id="saveBtn" data-i18n="保存">保存</button>
+        <button class="btn" id="closeEditorBtn">竊�</button>
+        <div class="small" id="charCount" data-i18n="譁�ｭ玲焚">譁�ｭ玲焚 0</div>
+        <div class="row" style="gap:8px">
+          <div class="small" id="saveStatus" style="color:var(--muted)" data-i18n="菫晏ｭ俶ｸ医∩">菫晏ｭ俶ｸ医∩</div>
+          <button class="btn" id="backToListBtn" data-i18n="謌ｻ繧�">謌ｻ繧�</button>
+        </div>
       </div>
-      <input id="titleInput" data-ph="タイトル" placeholder="タイトル" />
-      <textarea id="bodyInput" data-ph="ここに本文を書く。" placeholder="ここに本文を書く。"></textarea>
+      <input id="titleInput" data-ph="繧ｿ繧､繝医Ν" placeholder="繧ｿ繧､繝医Ν" />
+      <textarea id="bodyInput" data-ph="縺薙％縺ｫ譛ｬ譁�ｒ譖ｸ縺上�" placeholder="縺薙％縺ｫ譛ｬ譁�ｒ譖ｸ縺上�"></textarea>
+    </div>
+  </div>
+
+  <!-- custom dialog -->
+  <div id="customDialog">
+    <div id="dialogBox">
+      <div id="dialogTitle"></div>
+      <div id="dialogMessage"></div>
+      <div id="dialogButtons"></div>
     </div>
   </div>
 
 <script>
-  document.documentElement.insertAdjacentHTML(
-  "afterbegin",
-  `<div style="position:fixed;left:8px;top:8px;z-index:99999;
-              padding:6px 10px;border-radius:10px;
-              background:#ff0;color:#000;font-weight:800;">
-     JS OK
-   </div>`
-);
-window.onerror = function (msg, src, line, col) {
-  document.body.insertAdjacentHTML(
-    "afterbegin",
-    `<pre style="position:fixed;left:8px;top:44px;z-index:99999;
-                max-width:92vw;white-space:pre-wrap;
-                padding:10px;border-radius:10px;
-                background:#f33;color:#fff;">
-JS ERROR:
-${msg}
-${line}:${col}
-${src}
-</pre>`
-  );
-};
-
-/** ========= 設定 ========= */
+/** ========= 險ｭ螳� ========= */
 const CONFIG = {
-  showMemosOnTop: true,   // ←「メモ一覧いらん」なら false にする（フォルダだけ表示）
-  autosaveMs: 600,        // 自動保存間隔
+  showMemosOnTop: true,   // 竊舌後Γ繝｢荳隕ｧ縺�ｉ繧薙阪↑繧� false 縺ｫ縺吶ｋ�医ヵ繧ｩ繝ｫ繝縺�縺題｡ｨ遉ｺ��
+  autosaveMs: 600,        // 閾ｪ蜍穂ｿ晏ｭ倬俣髫�
   storageKey: "memoTreeV2_notaUI"
 };
 
-/** ========= データ =========
+/** ========= 繝��繧ｿ =========
 node = { folders:{name:node}, memos:{id:{id,title,text,updatedAt}} }
 */
 function newNode(){ return { folders:{}, memos:{} }; }
@@ -275,7 +296,7 @@ function now(){ return Date.now(); }
 function uid(){ return "m_" + Math.random().toString(36).slice(2) + "_" + now().toString(36); }
 
 let root = load() || newNode();
-let path = [];                 // ["皇颯", "短編", ...]
+let path = [];                 // ["逧�｢ｯ", "遏ｭ邱ｨ", ...]
 let editingId = null;
 let autosaveTimer = null;
 
@@ -293,7 +314,7 @@ function persist(){
     localStorage.setItem(CONFIG.storageKey+"_bak", JSON.stringify(root));
     localStorage.setItem(CONFIG.storageKey, JSON.stringify(root));
   }catch(e){
-    alert("保存できませんでした（ストレージ上限など）");
+    alert("菫晏ｭ倥〒縺阪∪縺帙ｓ縺ｧ縺励◆�医せ繝医Ξ繝ｼ繧ｸ荳企剞縺ｪ縺ｩ��");
   }
 }
 function getNode(p = path){
@@ -303,6 +324,9 @@ function getNode(p = path){
     node = node.folders[name];
   }
   return node;
+}
+function getParentNode(){
+  return getNode(path.slice(0, -1));
 }
 function folderCharSum(node){
   let sum = 0;
@@ -316,7 +340,7 @@ function folderCharSum(node){
 }
 
 function setCrumb(){
-  el("headTitle").textContent = path.length ? path[path.length-1] : "ホーム";
+  el("headTitle").textContent = path.length ? path[path.length-1] : "繝帙�繝�";
   el("breadcrumb").textContent = "/" + path.join("/");
   el("backBtn").disabled = path.length === 0;
 }
@@ -349,16 +373,27 @@ function render(){
     div.className = "item";
     div.innerHTML = `
       <div class="left" style="min-width:0">
-        <div class="ico">📁</div>
+        <div class="ico">刀</div>
         <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
       </div>
       <div class="meta">
-      <span>${t("文字数")} ${charSum}</span>
-        <span>📝 ${memoCount}</span>
-        <span>文字 ${charSum}</span>
-        <span class="arrow">›</span>
+      <span>${t("譁�ｭ玲焚")} ${charSum}</span>
+        <span>統 ${memoCount}</span>
+        <span>譁�ｭ� ${charSum}</span>
+        <span class="arrow">窶ｺ</span>
       </div>
     `;
+    let pressTimer;
+    div.addEventListener("mousedown", ()=>{
+      pressTimer = setTimeout(()=>deleteFolder(name), 500);
+    });
+    div.addEventListener("mouseup", ()=>clearTimeout(pressTimer));
+    div.addEventListener("mouseleave", ()=>clearTimeout(pressTimer));
+    div.addEventListener("touchstart", ()=>{
+      pressTimer = setTimeout(()=>deleteFolder(name), 500);
+    });
+    div.addEventListener("touchend", ()=>clearTimeout(pressTimer));
+    div.addEventListener("touchcancel", ()=>clearTimeout(pressTimer));
     div.addEventListener("click", ()=>{
       path.push(name);
       render();
@@ -377,9 +412,9 @@ function render(){
     let memoShown = 0;
 
     for(const m of memos){
-      const t = (m.title||"").toLowerCase();
+      const titleLower = (m.title||"").toLowerCase();
       const x = (m.text||"").toLowerCase();
-      if(q && !(t.includes(q) || x.includes(q))) continue;
+      if(q && !(titleLower.includes(q) || x.includes(q))) continue;
       memoShown++;
 
       const preview = (m.text||"").replace(/\s+/g," ").slice(0,30);
@@ -387,19 +422,30 @@ function render(){
       div.className = "item";
       div.innerHTML = `
         <div class="left" style="min-width:0">
-          <div class="ico">📝</div>
+          <div class="ico">統</div>
           <div style="min-width:0">
-            <div class="name" title="${escapeHtml(m.title||"(無題)")}">${escapeHtml(m.title||"(無題)")}</div>
+            <div class="name" title="${escapeHtml(m.title||"(辟｡鬘�)")}">${escapeHtml(m.title||"(辟｡鬘�)")}</div>
             <div class="hint" style="margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:52vw;">
               ${escapeHtml(preview)}
             </div>
           </div>
         </div>
         <div class="meta">
-        <span>${(m.text||"").length}${t("字")}</span>
-          <span class="arrow">›</span>
+        <span>${(m.text||"").length}${t("蟄�")}</span>
+          <span class="arrow">窶ｺ</span>
         </div>
       `;
+      let pressTimer;
+      div.addEventListener("mousedown", ()=>{
+        pressTimer = setTimeout(()=>deleteMemo(m.id), 500);
+      });
+      div.addEventListener("mouseup", ()=>clearTimeout(pressTimer));
+      div.addEventListener("mouseleave", ()=>clearTimeout(pressTimer));
+      div.addEventListener("touchstart", ()=>{
+        pressTimer = setTimeout(()=>deleteMemo(m.id), 500);
+      });
+      div.addEventListener("touchend", ()=>clearTimeout(pressTimer));
+      div.addEventListener("touchcancel", ()=>clearTimeout(pressTimer));
       div.addEventListener("click", ()=>openEditor(m.id));
       memosList.appendChild(div);
     }
@@ -410,9 +456,9 @@ function render(){
 function hasHitInFolder(node, q){
   for(const id in node.memos){
     const m = node.memos[id];
-    const t = (m.title||"").toLowerCase();
+    const titleLower = (m.title||"").toLowerCase();
     const x = (m.text||"").toLowerCase();
-    if(t.includes(q) || x.includes(q)) return true;
+    if(titleLower.includes(q) || x.includes(q)) return true;
   }
   for(const name in node.folders){
     if(hasHitInFolder(node.folders[name], q)) return true;
@@ -424,15 +470,15 @@ function escapeHtml(s){
   return (s??"").replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
 }
 
-/** ========= 操作 ========= */
+/** ========= 謫堺ｽ� ========= */
 function goUp(){
   if(path.length>0){ path.pop(); render(); }
 }
 function addFolder(){
-  const name = prompt(t("フォルダ名"));
+  const name = prompt(t("繝輔か繝ｫ繝蜷�"));
   if(!name) return;
   const node = getNode();
-  if(node.folders[name]){ alert(t("同名フォルダがあります")); return; }
+  if(node.folders[name]){ alert(t("蜷悟錐繝輔か繝ｫ繝縺後≠繧翫∪縺�")); return; }
   node.folders[name] = newNode();
   persist();
   render();
@@ -445,26 +491,68 @@ function addMemo(){
   openEditor(id);
 }
 function renameCurrentFolder(){
-  if(path.length===0){ alert(t("ホームは変更できません")); return; }
+  if(path.length===0){ alert(t("繝帙�繝�縺ｯ螟画峩縺ｧ縺阪∪縺帙ｓ")); return; }
   const parent = getParentNode();
   const old = path[path.length-1];
-  const nu = prompt(t("新しいフォルダ名"), old);
+  const nu = prompt(t("譁ｰ縺励＞繝輔か繝ｫ繝蜷�"), old);
   if(!nu || nu===old) return;
-  if(parent.folders[nu]){ alert(t("同名フォルダがあります")); return; }
+  if(parent.folders[nu]){ alert(t("蜷悟錐繝輔か繝ｫ繝縺後≠繧翫∪縺�")); return; }
   parent.folders[nu] = parent.folders[old];
   delete parent.folders[old];
   path[path.length-1] = nu;
   persist();
   render();
 }
-function deleteCurrentFolder(){
-  if(path.length===0){ alert(t("ホームは削除できません")); return; }
+async function deleteCurrentFolder(){
+  if(path.length===0){ alert(t("繝帙�繝�縺ｯ蜑企勁縺ｧ縺阪∪縺帙ｓ")); return; }
   const parent = getParentNode();
   const name = path[path.length-1];
-  const ok = confirm(`${t("削除しますか?")}「${name}」`);
+  const ok = await showDialog(
+    name,
+    t("蜑企勁縺励∪縺吶°?"),
+    [
+      { text: t("謌ｻ繧�"), value: false },
+      { text: t("螻�繧�"), value: true, danger: true }
+    ]
+  );
   if(!ok) return;
   delete parent.folders[name];
   path.pop();
+  persist();
+  render();
+}
+async function deleteMemo(id){
+  const node = getNode();
+  const m = node.memos[id];
+  if(!m){ alert(t("繝｡繝｢縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ")); return; }
+  
+  const ok = await showDialog(
+    m.title || t("(辟｡鬘�)"),
+    t("逕溯ｴ��縺薙＞縺､縺�?"),
+    [
+      { text: t("騾縺�"), value: false },
+      { text: t("螻�繧�"), value: true, danger: true }
+    ]
+  );
+  if(!ok) return;
+  delete node.memos[id];
+  persist();
+  render();
+}
+async function deleteFolder(name){
+  const node = getNode();
+  if(!node.folders[name]) return;
+  
+  const ok = await showDialog(
+    name,
+    t("蜑企勁縺励∪縺吶°?"),
+    [
+      { text: t("謌ｻ繧�"), value: false },
+      { text: t("螻�繧�"), value: true, danger: true }
+    ]
+  );
+  if(!ok) return;
+  delete node.folders[name];
   persist();
   render();
 }
@@ -474,7 +562,7 @@ function openEditor(id){
   editingId = id;
   const node = getNode();
   const m = node.memos[id];
-if(!m){ alert(t("メモが見つかりません")); return; }
+if(!m){ alert(t("繝｡繝｢縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ")); return; }
   
   el("titleInput").value = m.title || "";
   el("bodyInput").value = m.text || "";
@@ -497,8 +585,44 @@ function closeEditor(){
   render();
 }
 function updateCharCount(){
-  el("charCount").textContent = "文字数 " + (el("bodyInput").value || "").length;
+  el("charCount").textContent = "譁�ｭ玲焚 " + (el("bodyInput").value || "").length;
 }
+function showSaving(){
+  const status = el("saveStatus");
+  if(status) status.textContent = t("菫晏ｭ倅ｸｭ");
+}
+function showSaved(){
+  const status = el("saveStatus");
+  if(status) status.textContent = t("菫晏ｭ俶ｸ医∩");
+}
+
+/** ========= Custom Dialog ========= */
+function showDialog(title, message, buttons){
+  return new Promise((resolve)=>{
+    const dialog = el("customDialog");
+    const dialogTitle = el("dialogTitle");
+    const dialogMessage = el("dialogMessage");
+    const dialogButtons = el("dialogButtons");
+
+    dialogTitle.textContent = title;
+    dialogMessage.textContent = message;
+    dialogButtons.innerHTML = "";
+
+    buttons.forEach(btn=>{
+      const button = document.createElement("button");
+      button.className = btn.danger ? "btn danger" : "btn";
+      button.textContent = btn.text;
+      button.addEventListener("click", ()=>{
+        dialog.style.display = "none";
+        resolve(btn.value);
+      });
+      dialogButtons.appendChild(button);
+    });
+
+    dialog.style.display = "flex";
+  });
+}
+
 function saveMemo(silent=false){
   if(!editingId) return;
   const node = getNode();
@@ -510,6 +634,7 @@ function saveMemo(silent=false){
   m.updatedAt = now();
 
   persist();
+  showSaved();
   if(!silent) render();
 }
 
@@ -519,67 +644,68 @@ el("backBtn")?.addEventListener("click", goUp);
 el("addFolderBtn")?.addEventListener("click", addFolder);
 el("addMemoBtn")?.addEventListener("click", addMemo);
 el("renameFolderBtn")?.addEventListener("click", renameCurrentFolder);
-el("deleteFolderBtn")?.addEventListener("click", deleteCurrentFolder);
 
 el("closeEditorBtn")?.addEventListener("click", closeEditor);
-el("saveBtn")?.addEventListener("click", ()=>saveMemo(false));
+el("backToListBtn")?.addEventListener("click", closeEditor);
 el("qInput")?.addEventListener("input", ()=>render());
-el("bodyInput")?.addEventListener("input", updateCharCount);
-
-// ついで：検索ボタンは元から何もしてないので、押したら検索欄にフォーカスさせとく
-el("searchBtn")?.addEventListener("click", ()=>el("qInput")?.focus());
-/** ========= モード & 辞書 ========= */
+el("titleInput")?.addEventListener("input", showSaving);
+el("bodyInput")?.addEventListener("input", ()=>{ updateCharCount(); showSaving(); });
+/** ========= 繝｢繝ｼ繝� & 霎樊嶌 ========= */
 const MODE_KEY = "memoTree_mode_kouki";
 let koukiMode = localStorage.getItem(MODE_KEY) === "1";
 
 const DICT_NORMAL = {
-  // ここは必要なら入れる（通常時の表記を変えたい場合のみ）
+  // 縺薙％縺ｯ蠢�ｦ√↑繧牙�繧後ｋ�磯壼ｸｸ譎ゅ�陦ｨ險倥ｒ螟峨∴縺溘＞蝣ｴ蜷医�縺ｿ��
 };
 
 const DICT_KOUKI = {
-  // ① 共通UI
-  "ホーム":"ホーム",
-  "保存":"処理完了",
-  "戻る":"一旦引く",
-  "閉じる":"撤収",
-  "検索":"索敵",
-  "フォルダ名変更":"獲物名変更",
-  "フォルダ削除":"屠る",
-  "フォルダ":"獲物",
-  "メモ":"肉",
-  "フォルダなし":"仕入れ前",
-  "メモなし":"腹が減った",
-  "＋メモ":"＋解体",
-  "＋📁":"＋仕留める",
+  // 竭� 蜈ｱ騾啅I
+  "繝帙�繝�":"繝帙�繝�",
+  "菫晏ｭ�":"蜃ｦ逅�ｮ御ｺ�",
+  "謌ｻ繧�":"騾縺�",
+  "髢峨§繧�":"謦､蜿�",
+  "讀懃ｴ｢":"邏｢謨ｵ",
+  "繝輔か繝ｫ繝蜷榊､画峩":"迯ｲ迚ｩ蜷榊､画峩",
+  "繝輔か繝ｫ繝蜑企勁":"螻�繧�",
+  "繝輔か繝ｫ繝":"迯ｲ迚ｩ",
+  "繝｡繝｢":"閧臥援",
+  "繝輔か繝ｫ繝縺ｪ縺�":"莉募�繧悟燕",
+  "繝｡繝｢縺ｪ縺�":"閻ｹ縺梧ｸ帙▲縺�",
+  "�九Γ繝｢":"�玖ｧ｣菴�",
+  "�愚沒�":"�倶ｻ慕蕗繧√ｋ",
 
   // editor
-  "文字数":"重量",
-  "タイトル":"味付け",
-  "ここに本文を書く。":"解体ショーの始まりだ",
+  "譁�ｭ玲焚":"驥埼㍼",
+  "繧ｿ繧､繝医Ν":"蜻ｳ莉倥￠",
+  "縺薙％縺ｫ譛ｬ譁�ｒ譖ｸ縺上�":"隗｣菴薙す繝ｧ繝ｼ縺ｮ蟋九∪繧翫□",
 
-  // 検索補助
-  "タイトル/本文の一部（任意）":"索敵（任意）",
+  // 讀懃ｴ｢陬懷勧
+  "繧ｿ繧､繝医Ν/譛ｬ譁��荳驛ｨ�井ｻｻ諢擾ｼ�":"邏｢謨ｵ�井ｻｻ諢擾ｼ�",
 
-  // 追加で必要になりがちなやつ
-  "(無題)":"(無題)",
+  // 霑ｽ蜉�縺ｧ蠢�ｦ√↓縺ｪ繧翫′縺｡縺ｪ繧�▽
+  "(辟｡鬘�)":"(辟｡鬘�)",
 
-  // B リネーム
-  "名前を変更":"風味の調整",
-  "名前を変更しました":"味を調整した",
+  // B 繝ｪ繝阪�繝�
+  "蜷榊燕繧貞､画峩":"鬚ｨ蜻ｳ縺ｮ隱ｿ謨ｴ",
+  "蜷榊燕繧貞､画峩縺励∪縺励◆":"蜻ｳ繧定ｪｿ謨ｴ縺励◆",
 
-  // C 競合/上書き
-  "上書きしました":"仕込み完了だ",
-  "変更が競合しています":"オーダーが被った",
+  // C 遶ｶ蜷�/荳頑嶌縺�
+  "荳頑嶌縺阪＠縺ｾ縺励◆":"莉戊ｾｼ縺ｿ螳御ｺ�□",
+  "螟画峩縺檎ｫｶ蜷医＠縺ｦ縺�∪縺�":"繧ｪ繝ｼ繝繝ｼ縺瑚｢ｫ縺｣縺�",
 
-  // D 自動保存ステータス（必要なら表示する時用）
-  "自動保存中":"解体の邪魔をするな",
-  "自動保存完了":"寝かせて馴染ませる",
+  // D 閾ｪ蜍穂ｿ晏ｭ倥せ繝��繧ｿ繧ｹ
+  "菫晏ｭ倅ｸｭ":"菫ｺ縺ｮ迯ｲ迚ｩ縺�",
+  "菫晏ｭ俶ｸ医∩":"辭滓�縺輔○繧�",
 
-  // ⑤ ダイアログ類（あなたの毒辞書は後でここに足してOK）
-  "同名フォルダがあります":"同じ獲物は要らねえ",
-  "ホームは変更できません":"ここは動かせねえ",
-  "ホームは削除できません":"ここは屠れねえ",
-  "メモが見つかりません":"毒の痕跡がない"
+  // 竭､ 繝繧､繧｢繝ｭ繧ｰ鬘�
+  "繝輔か繝ｫ繝蜷�":"迯ｲ迚ｩ蜷�",
+  "譁ｰ縺励＞繝輔か繝ｫ繝蜷�":"陦逾ｭ繧翫↓荳翫￡繧�",
+  "蜑企勁縺励∪縺吶°?":"逕溯ｴ��縺薙＞縺､縺�?",
+  "菫晏ｭ倥〒縺阪∪縺帙ｓ縺ｧ縺励◆�医せ繝医Ξ繝ｼ繧ｸ荳企剞縺ｪ縺ｩ��":"辭滓�縺瑚ｶｳ繧翫�縺�",
+  "蜷悟錐繝輔か繝ｫ繝縺後≠繧翫∪縺�":"蠑ｱ閧牙ｼｷ鬟溘□",
+  "繝帙�繝�縺ｯ螟画峩縺ｧ縺阪∪縺帙ｓ":"邵�ｼｵ繧翫ｒ闕偵ｉ縺吶↑",
+  "繝帙�繝�縺ｯ蜑企勁縺ｧ縺阪∪縺帙ｓ":"逕溘″縺ｦ蟶ｰ繧後ｋ縺ｨ諤昴≧縺ｪ",
+  "繝｡繝｢縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ":"莉募�繧悟燕縺�"
 };
 
 function dict(){
@@ -590,7 +716,7 @@ function t(s){
   return d[s] ?? s;
 }
 
-// data-i18n と data-ph（placeholder） を一括反映
+// data-i18n 縺ｨ data-ph��placeholder�� 繧剃ｸ諡ｬ蜿肴丐
 function applyDict(){
   document.querySelectorAll("[data-i18n]").forEach(el=>{
     const key = el.getAttribute("data-i18n");
@@ -600,7 +726,7 @@ function applyDict(){
     const key = el.getAttribute("data-ph");
     el.setAttribute("placeholder", t(key));
   });
-  // タイトルや tooltip も必要ならここで
+  // 繧ｿ繧､繝医Ν繧� tooltip 繧ょｿ�ｦ√↑繧峨％縺薙〒
 }
 
 function toggleMode(){
@@ -614,15 +740,15 @@ function toggleMode(){
 function renderModeBtn(){
   const btn = el("modeBtn");
   if(btn){
-    btn.textContent = koukiMode ? "皇" : "待";
-    btn.title = koukiMode ? "通常モードへ" : "皇紀モードへ";
+    btn.textContent = koukiMode ? "逧�" : "蠕�";
+    btn.title = koukiMode ? "騾壼ｸｸ繝｢繝ｼ繝峨∈" : "逧�ｴ繝｢繝ｼ繝峨∈";
   }
 }
 
-// モード切替ボタン
+// 繝｢繝ｼ繝牙�譖ｿ繝懊ち繝ｳ
 if(el("modeBtn")) el("modeBtn").addEventListener("click", toggleMode);
 
-// 初期化
+// 蛻晄悄蛹�
 renderModeBtn();
 applyDict();
 render();
