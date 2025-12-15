@@ -204,7 +204,6 @@
   </header>
 
 <main>
-  ...
   <div class="panel" id="foldersPanel">
     <h3>フォルダ</h3>
     <div id="foldersList"></div>
@@ -216,7 +215,6 @@
     <div id="memosList"></div>
     <div class="hint" id="memosEmpty" style="display:none;">メモなし</div>
   </div>
-  ...
 </main>
 
   <div class="fab">
@@ -452,10 +450,9 @@ function goUp(){
 }
 function addFolder(){
   const name = prompt(t("フォルダ名"));
-...
-if(node.folders[name]){ alert(t("同名フォルダがあります")); return; }
+  if(!name) return;
   const node = getNode();
-  if(node.folders[name]){ alert("同名フォルダがあります"); return; }
+  if(node.folders[name]){ alert(t("同名フォルダがあります")); return; }
   node.folders[name] = newNode();
   persist();
   render();
@@ -469,10 +466,11 @@ function addMemo(){
 }
 function renameCurrentFolder(){
   if(path.length===0){ alert(t("ホームは変更できません")); return; }
-...
-const nu = prompt(t("新しいフォルダ名"), old);
-...
-if(parent.folders[nu]){ alert(t("同名フォルダがあります")); return; }
+  const parent = getParentNode();
+  const old = path[path.length-1];
+  const nu = prompt(t("新しいフォルダ名"), old);
+  if(!nu || nu===old) return;
+  if(parent.folders[nu]){ alert(t("同名フォルダがあります")); return; }
   parent.folders[nu] = parent.folders[old];
   delete parent.folders[old];
   path[path.length-1] = nu;
@@ -480,9 +478,10 @@ if(parent.folders[nu]){ alert(t("同名フォルダがあります")); return; }
   render();
 }
 function deleteCurrentFolder(){
-if(path.length===0){ alert(t("ホームは削除できません")); return; }
-...
-const ok = confirm(`${t("削除しますか？")}「${name}」`);
+  if(path.length===0){ alert(t("ホームは削除できません")); return; }
+  const parent = getParentNode();
+  const name = path[path.length-1];
+  const ok = confirm(`${t("削除しますか?")}「${name}」`);
   if(!ok) return;
   delete parent.folders[name];
   path.pop();
@@ -530,7 +529,7 @@ function saveMemo(silent=false){
   m.text  = el("bodyInput").value || "";
   m.updatedAt = now();
 
-  alert(t("保存に失敗しました"));
+  persist();
   if(!silent) render();
 }
 
@@ -637,13 +636,6 @@ function applyDict(){
   // タイトルや tooltip も必要ならここで
 }
 
-function render(){
-  ...
-  if(CONFIG.showMemosOnTop){
-    ...
-  }
-  applyDict();
-}
 
   
 </script>
