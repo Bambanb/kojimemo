@@ -241,6 +241,19 @@
 
 <script>
 
+  // 公開するたびにここだけ数字を変える（例: 20251215_01）
+  const APP_VERSION = "20251215_01";
+
+  const url = new URL(location.href);
+  const v = url.searchParams.get("v");
+
+  if (v !== APP_VERSION) {
+    url.searchParams.set("v", APP_VERSION);
+    // 履歴を汚さないで差し替え→読み直し
+    location.replace(url.toString());
+  }
+</script>
+      <script/>
   document.documentElement.insertAdjacentHTML(
   "afterbegin",
   `<div style="position:fixed;left:8px;top:8px;z-index:99999;
@@ -522,33 +535,25 @@ function saveMemo(silent=false){
 }
 
 /** ========= bind ========= */
-el("backBtn").addEventListener("click", goUp);
-el("addFolderBtn").addEventListener("click", addFolder);
-el("addMemoBtn").addEventListener("click", addMemo);
-el("renameFolderBtn").addEventListener("click", renameCurrentFolder);
-el("deleteFolderBtn").addEventListener("click", deleteCurrentFolder);
+/** ========= bind ========= */
+el("backBtn")?.addEventListener("click", goUp);
+el("addFolderBtn")?.addEventListener("click", addFolder);
+el("addMemoBtn")?.addEventListener("click", addMemo);
+el("renameFolderBtn")?.addEventListener("click", renameCurrentFolder);
+el("deleteFolderBtn")?.addEventListener("click", deleteCurrentFolder);
 
-el("closeEditorBtn").addEventListener("click", closeEditor);
-el("saveBtn").addEventListener("click", ()=>saveMemo(false));
-el("qInput").addEventListener("input", ()=>render());
-el("bodyInput").addEventListener("input", updateCharCount);
-el("titleInput").addEventListener("input", ()=>{ /* optional */ });
+el("closeEditorBtn")?.addEventListener("click", closeEditor);
+el("saveBtn")?.addEventListener("click", ()=>saveMemo(false));
+el("qInput")?.addEventListener("input", ()=>render());
+el("bodyInput")?.addEventListener("input", updateCharCount);
 
+// ついで：検索ボタンは元から何もしてないので、押したら検索欄にフォーカスさせとく
+el("searchBtn")?.addEventListener("click", ()=>el("qInput")?.focus());
+
+render();
   
-function renderModeBtn(){
-  const b = el("modeBtn");
-  if(!b) return;
-  b.textContent = koukiMode ? "解" : "待";
+  // 一覧の「文字」「字」等、JS描画にも影響させるなら再描画
 }
-
-function toggleMode(){
-  koukiMode = !koukiMode;
-  localStorage.setItem(MODE_KEY, koukiMode ? "1" : "0");
-  applyDict();
-  renderModeBtn();
-  render(); // 一覧の「文字」「字」等、JS描画にも影響させるなら再描画
-}
-
 if(el("modeBtn")) el("modeBtn").addEventListener("click", toggleMode);
 renderModeBtn();
 applyDict();
