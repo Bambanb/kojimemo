@@ -200,31 +200,24 @@
       </div>
       <button class="btn" id="renameFolderBtn" data-i18n="フォルダ名変更">フォルダ名変更</button>
 <button class="btn danger" id="deleteFolderBtn" data-i18n="フォルダ削除">フォルダ削除</button>
-      <button class="btn danger" id="deleteFolderBtn">フォルダ削除</button>
     </div>
   </header>
 
-  <main>
-    <div class="panel" id="foldersPanel">
-      <h3>フォルダ</h3>
-      <div id="foldersList"></div>
+<main>
+  ...
+  <div class="panel" id="foldersPanel">
+    <h3>フォルダ</h3>
+    <div id="foldersList"></div>
+    <div class="hint" id="foldersEmpty" style="display:none;">フォルダなし</div>
+  </div>
 
-<h3 data-i18n="フォルダ">フォルダ</h3>
-...
-<div class="hint" id="foldersEmpty" style="display:none;" data-i18n="フォルダなし">フォルダなし</div>
-
-<h3 data-i18n="メモ">メモ</h3>
-...
-<div class="hint" id="memosEmpty" style="display:none;" data-i18n="メモなし">メモなし</div>
-      
-        </div>
-
-    <div class="panel" id="memosPanel">
-      <h3>メモ</h3>
-      <div id="memosList"></div>
-      <div class="hint" id="memosEmpty" style="display:none;">メモなし</div>
-    </div>
-  </main>
+  <div class="panel" id="memosPanel">
+    <h3>メモ</h3>
+    <div id="memosList"></div>
+    <div class="hint" id="memosEmpty" style="display:none;">メモなし</div>
+  </div>
+  ...
+</main>
 
   <div class="fab">
     <button class="btn accent" id="addMemoBtn" data-i18n="＋メモ">＋メモ</button>
