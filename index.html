@@ -260,11 +260,6 @@ ${src}
   );
 };
 
-  window.onerror = function (msg, src, line, col, err) {
-  alert(`JSエラー:\n${msg}\n${line}:${col}\n${src}`);
-};
-alert("JS 起動OK");
-  
 /** ========= 設定 ========= */
 const CONFIG = {
   showMemosOnTop: true,   // ←「メモ一覧いらん」なら false にする（フォルダだけ表示）
@@ -533,23 +528,10 @@ el("bodyInput")?.addEventListener("input", updateCharCount);
 
 // ついで：検索ボタンは元から何もしてないので、押したら検索欄にフォーカスさせとく
 el("searchBtn")?.addEventListener("click", ()=>el("qInput")?.focus());
-
-render();
-  
-  // 一覧の「文字」「字」等、JS描画にも影響させるなら再描画
-}
-if(el("modeBtn")) el("modeBtn").addEventListener("click", toggleMode);
-renderModeBtn();
-applyDict();
-  
-render();
-
-  /** ========= モード & 辞書 ========= */
+/** ========= モード & 辞書 ========= */
 const MODE_KEY = "memoTree_mode_kouki";
 let koukiMode = localStorage.getItem(MODE_KEY) === "1";
-  DICT_KOUKI["字"] = "g"; // ←ここは好みで。「字」→「g」だと軽くて好き
-// もしくは
-DICT_KOUKI["字"] = "重量";
+
 const DICT_NORMAL = {
   // ここは必要なら入れる（通常時の表記を変えたい場合のみ）
 };
@@ -620,6 +602,31 @@ function applyDict(){
   });
   // タイトルや tooltip も必要ならここで
 }
+
+function toggleMode(){
+  koukiMode = !koukiMode;
+  localStorage.setItem(MODE_KEY, koukiMode ? "1" : "0");
+  renderModeBtn();
+  applyDict();
+  render();
+}
+
+function renderModeBtn(){
+  const btn = el("modeBtn");
+  if(btn){
+    btn.textContent = koukiMode ? "皇" : "待";
+    btn.title = koukiMode ? "通常モードへ" : "皇紀モードへ";
+  }
+}
+
+// モード切替ボタン
+if(el("modeBtn")) el("modeBtn").addEventListener("click", toggleMode);
+
+// 初期化
+renderModeBtn();
+applyDict();
+render();
+
 
 
   
